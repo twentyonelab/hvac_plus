@@ -6,8 +6,8 @@ Aplikacja webowa 21 zmysłów do projektowania wentylacji mechanicznej z odzyski
 
 ## Co robi
 
-1. Podkład: wgranie rzutu (PDF / PNG / JPG), kalibracja skali.
-2. Pomieszczenia: obrys ręczny, rozpoznawanie automatyczne z rysunku (maska ścian + OCR), mieszkańcy na rzucie.
+1. Podkład: wgranie rzutu (PDF / PNG / JPG), zmiana rozmiaru podkładu („Popraw"), kalibracja skali.
+2. Pomieszczenia: prostokąt z dwóch narożników albo nieregularny obrys punkt po punkcie, rozpoznawanie automatyczne z rysunku (maska ścian + OCR), edycja obrysu po zaznaczeniu (uchwyty wierzchołków, wymiary liczbowe), mieszkańcy na rzucie.
 3. Urządzenia i sieć: centrala, rozdzielacze, anemostaty, czerpnia, wyrzutnia, piony, kanały spiro i przewody FLX. Urządzenia wstawia się **przeciągnięciem karty** z szyny narzędzi na rzut albo kliknięciem karty i kliknięciem na rzucie.
 4. Obliczenia: bilans powietrza (PN-83/B-03430, WT §147–155), strefy dzień/noc, wymiarowanie przewodów, spręż, dobór centrali HRU, zestawienie materiałów, lista kontrolna zgodności.
 5. Widok 3D (aksonometria), symulator sterowania (Modbus / GATE), raport do wydruku z arkuszami rysunkowymi.
@@ -56,6 +56,8 @@ Lewa szyna zostaje tym, czym powinna być — katalogiem tego, co wstawiamy w pr
 - **Jedna ścieżka wstawiania elementu.** `placeNodeAt(type, punkt)` w silniku obsługuje i kliknięcie narzędziem, i upuszczenie karty. Reguły (numer pionu, przypisanie do pomieszczenia, ostrzeżenia) nie mogą się rozjechać między trybami.
 - **Cofnij / przywróć na jednym stosie.** `snapshot()` czyści stos „przywróć", `undo()` i `redo()` przerzucają stany między stosami. Każda zmiana na planie przechodzi przez `snapshot()`, więc historia obejmuje też przeciągnięte karty i automatykę.
 - **Obrót 3D wokół środka bryły.** `v3Orbit()` zmienia kąty i koryguje przesunięcie tak, by środek modelu został w tym samym punkcie ekranu — bryła nie ucieka poza kadr przy obracaniu.
+- **Zmiana rozmiaru podkładu wypala się w obrazie.** Suwak daje podgląd (`bgPrevK` tylko przy rysowaniu), a „Zastosuj" przerysowuje podkład do nowego rozmiaru i zapisuje jako obraz. Dzięki temu rozpoznawanie pomieszczeń, maska ścian i widok 3D pracują na realnych pikselach i nie wymagają własnej transformacji. Skala rysunku (px/m) nie zmienia się — obrysy i instalacja zostają na miejscu, żeby dało się dopasować podkład do nich.
+- **Nakładki na rysunku nie przechwytują kliknięć.** Kontenery mają `pointer-events:none`, tylko same kontrolki je łapią; `fitView()` zostawia marginesy pod nakładki, żeby rysunek nie chował się pod przyciskami.
 - **Kolory rysunku to warstwa semantyczna, nie dekoracja.** Zmiana palety = zmiana wartości w jednym miejscu (zmienne CSS + stałe silnika), a nie przy każdym `fillStyle`.
 - **UI podmienia globalne funkcje renderujące** (`renderFloorbar`, `refreshAll`, `setTool`) zamiast edytować silnik. Aktualizacja silnika = podmiana plików `engine-*.js`.
 

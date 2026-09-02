@@ -92,11 +92,13 @@ function freshState(){
 }
 state = freshState();
 /* projekt demonstracyjny — dom parter + poddasze; ładowany na start, żeby program nie zaczynał od pustej karty */
-const DEMO_PROJECT={"name":"DEMO — dom jednorodzinny, parter + poddasze (5 osób)","persons":5,"flxDia":90,"combi":true,"kitchenHood":true,"floors":[{"id":"iddr1g7cb","name":"Parter","h":2.7,"bg":null,"bgW":0,"bgH":0,"pxPerM":45,"rooms":[{"id":"id6j9qlwf","pts":[{"x":70,"y":70},{"x":232,"y":70},{"x":232,"y":227.5},{"x":70,"y":227.5}],"type":"kuchnia_gaz","name":"1/12 Kuchnia","areaOverride":12.41,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"id3sioxzx","pts":[{"x":232,"y":70},{"x":277,"y":70},{"x":277,"y":227.5},{"x":232,"y":227.5}],"type":"garderoba","name":"1/13 Spiżarnia","areaOverride":2.16,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idqm9k14s","pts":[{"x":277,"y":70},{"x":348.99999999999994,"y":70},{"x":348.99999999999994,"y":227.5},{"x":277,"y":227.5}],"type":"garderoba","name":"1/1 Wiatrołap","areaOverride":3.79,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idy90xtc9","pts":[{"x":349,"y":70},{"x":403,"y":70},{"x":403,"y":227.5},{"x":349,"y":227.5}],"type":"wc","name":"1/3 WC","areaOverride":1.87,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"id4axnqhe","pts":[{"x":403,"y":70},{"x":484.00000000000006,"y":70},{"x":484.00000000000006,"y":227.5},{"x":403,"y":227.5}],"type":"garderoba","name":"1/2 Garderoba","areaOverride":3.87,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"id5z1jhn1","pts":[{"x":483.99999999999994,"y":70},{"x":592,"y":70},{"x":592,"y":227.5},{"x":483.99999999999994,"y":227.5}],"type":"kotlownia","name":"1/4 Pom. techniczne","areaOverride":6.72,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idkdy7kb6","pts":[{"x":592,"y":70},{"x":767.5,"y":70},{"x":767.5,"y":227.5},{"x":592,"y":227.5}],"type":"sypialnia","name":"1/9 Sypialnia","areaOverride":13.51,"osoby":2,"hOverride":null,"flowOverride":null},{"id":"idjig5fd5","pts":[{"x":767.5,"y":70},{"x":844,"y":70},{"x":844,"y":227.5},{"x":767.5,"y":227.5}],"type":"garderoba","name":"1/10 Garderoba","areaOverride":5.63,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idnnjrh09","pts":[{"x":70,"y":227.5},{"x":844,"y":227.5},{"x":844,"y":263.5},{"x":70,"y":263.5}],"type":"komunikacja","name":"1/7 Komunikacja","areaOverride":14.24,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idft9zsko","pts":[{"x":70,"y":263.5},{"x":538,"y":263.5},{"x":538,"y":430},{"x":70,"y":430}],"type":"salon","name":"1/5 Salon","areaOverride":38.65,"osoby":3,"hOverride":null,"flowOverride":null},{"id":"idwtrl9cu","pts":[{"x":538,"y":263.5},{"x":727.0000000000001,"y":263.5},{"x":727.0000000000001,"y":430},{"x":538,"y":430}],"type":"salon","name":"1/6 Jadalnia","areaOverride":15.33,"osoby":2,"hOverride":null,"flowOverride":null},{"id":"idbh10aho","pts":[{"x":727,"y":263.5},{"x":790,"y":263.5},{"x":790,"y":430},{"x":727,"y":430}],"type":"lazienka","name":"1/11 Łazienka","areaOverride":4.8,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idcrzqk76","pts":[{"x":790,"y":263.5},{"x":844,"y":263.5},{"x":844,"y":430},{"x":790,"y":430}],"type":"garderoba","name":"1/8 Schowek","areaOverride":2.77,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"id30t9a0l","pts":[{"x":475,"y":466.00000000000006},{"x":790,"y":466.00000000000006},{"x":790,"y":664},{"x":475,"y":664}],"type":"garaz","name":"1/14 Garaż","areaOverride":30.21,"osoby":null,"hOverride":null,"flowOverride":null}],"nodes":[{"id":"id68fyezj","type":"ahu","x":538,"y":146.5},{"id":"idobviiao","type":"intake","x":538,"y":47.5},{"id":"idvd6ru8r","type":"exhout","x":502,"y":47.5},{"id":"idzshcpxv","type":"man_sup","x":340,"y":245.5},{"id":"idjce12ar","type":"man_exh","x":457,"y":245.5},{"id":"id2ls3ym0","type":"riser","x":619,"y":245.5,"num":1,"extraLen":3.2},{"id":"idplrisyr","type":"riser","x":655,"y":245.5,"num":2,"extraLen":3.2},{"id":"idd7psxj8","type":"term_exh","x":148.75001749999996,"y":148.75001749999996,"roomId":"id6j9qlwf","auto":true},{"id":"idy8uol15","type":"term_exh","x":103.75000749999998,"y":103.75000749999998,"roomId":"id6j9qlwf","auto":true},{"id":"idquaw320","type":"term_exh","x":256.0625055,"y":94.06250549999999,"roomId":"id3sioxzx","auto":true},{"id":"id16vyqsv","type":"term_exh","x":314.1875085,"y":107.18750849999998,"roomId":"idqm9k14s","auto":true},{"id":"id9ciphp6","type":"term_exh","x":377.4375065,"y":98.43750649999998,"roomId":"idy90xtc9","auto":true},{"id":"id2jzxjmh","type":"term_exh","x":444.5625095,"y":111.56250949999998,"roomId":"id4axnqhe","auto":true},{"id":"id2xk0cic","type":"term_sup","x":672.4375165,"y":150.43751649999996,"roomId":"idkdy7kb6","auto":true},{"id":"id55fh9wj","type":"term_exh","x":804.6875085,"y":111.56250949999998,"roomId":"idjig5fd5","auto":true},{"id":"idtqt2t3d","type":"term_sup","x":154.50000649999998,"y":348.0000065,"roomId":"idft9zsko","auto":true},{"id":"idqoo43hk","type":"term_sup","x":310.50001849999995,"y":348.0000065,"roomId":"idft9zsko","auto":true},{"id":"idp7l17pt","type":"term_sup","x":619.3750155,"y":344.87501549999996,"roomId":"idwtrl9cu","auto":true},{"id":"idnf26nnh","type":"term_exh","x":757.0625065,"y":298.1875075,"roomId":"idbh10aho","auto":true},{"id":"idwsw6qru","type":"term_exh","x":815.4375055,"y":293.5625065,"roomId":"idcrzqk76","auto":true},{"id":"occ1","type":"person","x":649.75,"y":178.75,"roomId":"idkdy7kb6"},{"id":"occ2","type":"person","x":677.75,"y":178.75,"roomId":"idkdy7kb6"},{"id":"occ3","type":"person","x":274.0,"y":376.75,"roomId":"idft9zsko"}],"segs":[{"id":"idlbnah6o","kind":"duct","a":"id68fyezj","b":"idobviiao","pts":[],"extraLen":0},{"id":"idnssgz3t","kind":"duct","a":"id68fyezj","b":"idvd6ru8r","pts":[],"extraLen":0},{"id":"id6t4oq46","kind":"duct","a":"id68fyezj","b":"idzshcpxv","pts":[{"x":538,"y":245.5}],"extraLen":0},{"id":"idqcxaaoj","kind":"duct","a":"id68fyezj","b":"idjce12ar","pts":[{"x":483.99999999999994,"y":245.5}],"extraLen":0},{"id":"id46h4o7j","kind":"duct","a":"id68fyezj","b":"id2ls3ym0","pts":[{"x":583,"y":245.5}],"extraLen":0},{"id":"idwmyk4tn","kind":"duct","a":"id68fyezj","b":"idplrisyr","pts":[{"x":601,"y":245.5}],"extraLen":0},{"id":"idjor1rzy","kind":"flx","a":"idzshcpxv","b":"id2xk0cic","pts":[],"extraLen":0},{"id":"idftks2ce","kind":"flx","a":"idzshcpxv","b":"idtqt2t3d","pts":[],"extraLen":0},{"id":"idig0pwzx","kind":"flx","a":"idzshcpxv","b":"idqoo43hk","pts":[],"extraLen":0},{"id":"id2b1wdml","kind":"flx","a":"idzshcpxv","b":"idp7l17pt","pts":[],"extraLen":0},{"id":"idsif26gz","kind":"flx","a":"idjce12ar","b":"idd7psxj8","pts":[],"extraLen":0},{"id":"ide8czx44","kind":"flx","a":"idjce12ar","b":"idy8uol15","pts":[],"extraLen":0},{"id":"id9so9p2z","kind":"flx","a":"idjce12ar","b":"idquaw320","pts":[],"extraLen":0},{"id":"idxt5hpjq","kind":"flx","a":"idjce12ar","b":"id16vyqsv","pts":[],"extraLen":0},{"id":"id5ljawl8","kind":"flx","a":"idjce12ar","b":"id9ciphp6","pts":[],"extraLen":0},{"id":"idscyckx5","kind":"flx","a":"idjce12ar","b":"id2jzxjmh","pts":[],"extraLen":0},{"id":"idot5zu94","kind":"flx","a":"idjce12ar","b":"id55fh9wj","pts":[],"extraLen":0},{"id":"idps7prb7","kind":"flx","a":"idjce12ar","b":"idnf26nnh","pts":[],"extraLen":0},{"id":"idpeqdfid","kind":"flx","a":"idjce12ar","b":"idwsw6qru","pts":[],"extraLen":0}]},{"id":"idrzrrx47","name":"Poddasze","h":2.6,"bg":null,"bgW":0,"bgH":0,"pxPerM":45,"rooms":[{"id":"idzqb1rq6","pts":[{"x":70,"y":70},{"x":331,"y":70},{"x":331,"y":241},{"x":70,"y":241}],"type":"pokoj","name":"2/3 Pokój 1","areaOverride":21.51,"osoby":2,"hOverride":null,"flowOverride":null},{"id":"id2hgj5sn","pts":[{"x":331,"y":70},{"x":412,"y":70},{"x":412,"y":241},{"x":331,"y":241}],"type":"lazienka","name":"2/4 Łazienka","areaOverride":6.81,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idys6erhq","pts":[{"x":412,"y":70},{"x":731.5,"y":70},{"x":731.5,"y":241},{"x":412,"y":241}],"type":"pokoj","name":"2/5 Pokój 2","areaOverride":26.84,"osoby":2,"hOverride":null,"flowOverride":null},{"id":"idri1fljo","pts":[{"x":731.5,"y":70},{"x":776.5,"y":70},{"x":776.5,"y":241},{"x":731.5,"y":241}],"type":"pralnia","name":"2/7 Pralnia","areaOverride":3.79,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idrgdtqqm","pts":[{"x":70,"y":241},{"x":250,"y":241},{"x":250,"y":326.49999999999994},{"x":70,"y":326.49999999999994}],"type":"komunikacja","name":"2/2 Komunikacja","areaOverride":7.53,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"id1uwk08j","pts":[{"x":250,"y":241},{"x":520,"y":241},{"x":520,"y":326.49999999999994},{"x":250,"y":326.49999999999994}],"type":"komunikacja","name":"2/6 Antresola","areaOverride":11.44,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idl1x3cdi","pts":[{"x":520,"y":241},{"x":650.5,"y":241},{"x":650.5,"y":326.49999999999994},{"x":520,"y":326.49999999999994}],"type":"komunikacja","name":"2/1 Antresola","areaOverride":5.4,"osoby":null,"hOverride":null,"flowOverride":null}],"nodes":[{"id":"idj3nczel","type":"riser","x":160,"y":281.5,"num":1,"extraLen":3.2},{"id":"idmggevnj","type":"riser","x":196,"y":281.5,"num":2,"extraLen":3.2},{"id":"idbk565ak","type":"man_sup","x":304,"y":281.5},{"id":"idvg0j41g","type":"man_exh","x":385,"y":281.5},{"id":"idxbaacvc","type":"term_sup","x":153.37501149999997,"y":153.37501149999997,"roomId":"idzqb1rq6","auto":true},{"id":"idw0kex3z","type":"term_exh","x":371.3750085,"y":110.37500849999998,"roomId":"id2hgj5sn","auto":true},{"id":"idmw5hmey","type":"term_sup","x":496.3125095,"y":154.31250949999998,"roomId":"idys6erhq","auto":true},{"id":"iduv3p917","type":"term_exh","x":752.8750045,"y":96.12500549999999,"roomId":"idri1fljo","auto":true},{"id":"occ4","type":"person","x":170.5,"y":185.5,"roomId":"idzqb1rq6"},{"id":"occ5","type":"person","x":541.75,"y":185.5,"roomId":"idys6erhq"}],"segs":[{"id":"idxco3gz8","kind":"duct","a":"idj3nczel","b":"idbk565ak","pts":[],"extraLen":0},{"id":"idi9fupb5","kind":"duct","a":"idmggevnj","b":"idvg0j41g","pts":[],"extraLen":0},{"id":"idaioe6ii","kind":"flx","a":"idbk565ak","b":"idxbaacvc","pts":[],"extraLen":0},{"id":"idfcjf6ee","kind":"flx","a":"idbk565ak","b":"idmw5hmey","pts":[],"extraLen":0},{"id":"idezkzl1b","kind":"flx","a":"idvg0j41g","b":"idw0kex3z","pts":[],"extraLen":0},{"id":"id5f1i4gq","kind":"flx","a":"idvg0j41g","b":"iduv3p917","pts":[],"extraLen":0}]}],"activeFloor":0,"author":"HVAC+ / 21 zmysłów (projekt demonstracyjny)","date":"2026-08-21","zoning":{"on":true,"dayZ1":40,"nightZ2":30}};
+const DEMO_PROJECT={"name":"DEMO — dom jednorodzinny (5 osób)","persons":5,"flxDia":90,"combi":true,"kitchenHood":true,"floors":[{"id":"iddr1g7cb","name":"Parter","h":2.7,"bg":null,"bgW":0,"bgH":0,"pxPerM":45,"rooms":[{"id":"id6j9qlwf","pts":[{"x":70,"y":70},{"x":232,"y":70},{"x":232,"y":227.5},{"x":70,"y":227.5}],"type":"kuchnia_gaz","name":"1/12 Kuchnia","areaOverride":12.41,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"id3sioxzx","pts":[{"x":232,"y":70},{"x":277,"y":70},{"x":277,"y":227.5},{"x":232,"y":227.5}],"type":"garderoba","name":"1/13 Spiżarnia","areaOverride":2.16,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idqm9k14s","pts":[{"x":277,"y":70},{"x":348.99999999999994,"y":70},{"x":348.99999999999994,"y":227.5},{"x":277,"y":227.5}],"type":"garderoba","name":"1/1 Wiatrołap","areaOverride":3.79,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idy90xtc9","pts":[{"x":349,"y":70},{"x":403,"y":70},{"x":403,"y":227.5},{"x":349,"y":227.5}],"type":"wc","name":"1/3 WC","areaOverride":1.87,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"id4axnqhe","pts":[{"x":403,"y":70},{"x":484.00000000000006,"y":70},{"x":484.00000000000006,"y":227.5},{"x":403,"y":227.5}],"type":"garderoba","name":"1/2 Garderoba","areaOverride":3.87,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"id5z1jhn1","pts":[{"x":483.99999999999994,"y":70},{"x":592,"y":70},{"x":592,"y":227.5},{"x":483.99999999999994,"y":227.5}],"type":"kotlownia","name":"1/4 Pom. techniczne","areaOverride":6.72,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idkdy7kb6","pts":[{"x":592,"y":70},{"x":767.5,"y":70},{"x":767.5,"y":227.5},{"x":592,"y":227.5}],"type":"sypialnia","name":"1/9 Sypialnia","areaOverride":13.51,"osoby":2,"hOverride":null,"flowOverride":null},{"id":"idjig5fd5","pts":[{"x":767.5,"y":70},{"x":844,"y":70},{"x":844,"y":227.5},{"x":767.5,"y":227.5}],"type":"garderoba","name":"1/10 Garderoba","areaOverride":5.63,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idnnjrh09","pts":[{"x":70,"y":227.5},{"x":844,"y":227.5},{"x":844,"y":263.5},{"x":70,"y":263.5}],"type":"komunikacja","name":"1/7 Komunikacja","areaOverride":14.24,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idft9zsko","pts":[{"x":70,"y":263.5},{"x":538,"y":263.5},{"x":538,"y":430},{"x":70,"y":430}],"type":"salon","name":"1/5 Salon","areaOverride":38.65,"osoby":3,"hOverride":null,"flowOverride":null},{"id":"idwtrl9cu","pts":[{"x":538,"y":263.5},{"x":727.0000000000001,"y":263.5},{"x":727.0000000000001,"y":430},{"x":538,"y":430}],"type":"salon","name":"1/6 Jadalnia","areaOverride":15.33,"osoby":2,"hOverride":null,"flowOverride":null},{"id":"idbh10aho","pts":[{"x":727,"y":263.5},{"x":790,"y":263.5},{"x":790,"y":430},{"x":727,"y":430}],"type":"lazienka","name":"1/11 Łazienka","areaOverride":4.8,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idcrzqk76","pts":[{"x":790,"y":263.5},{"x":844,"y":263.5},{"x":844,"y":430},{"x":790,"y":430}],"type":"garderoba","name":"1/8 Schowek","areaOverride":2.77,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"id30t9a0l","pts":[{"x":475,"y":466.00000000000006},{"x":790,"y":466.00000000000006},{"x":790,"y":664},{"x":475,"y":664}],"type":"garaz","name":"1/14 Garaż","areaOverride":30.21,"osoby":null,"hOverride":null,"flowOverride":null}],"nodes":[{"id":"id68fyezj","type":"ahu","x":538,"y":146.5},{"id":"idobviiao","type":"intake","x":538,"y":47.5},{"id":"idvd6ru8r","type":"exhout","x":502,"y":47.5},{"id":"idzshcpxv","type":"man_sup","x":340,"y":245.5},{"id":"idjce12ar","type":"man_exh","x":457,"y":245.5},{"id":"id2ls3ym0","type":"riser","x":619,"y":245.5,"num":1,"extraLen":3.2},{"id":"idplrisyr","type":"riser","x":655,"y":245.5,"num":2,"extraLen":3.2},{"id":"idd7psxj8","type":"term_exh","x":148.75001749999996,"y":148.75001749999996,"roomId":"id6j9qlwf","auto":true},{"id":"idy8uol15","type":"term_exh","x":103.75000749999998,"y":103.75000749999998,"roomId":"id6j9qlwf","auto":true},{"id":"idquaw320","type":"term_exh","x":256.0625055,"y":94.06250549999999,"roomId":"id3sioxzx","auto":true},{"id":"id16vyqsv","type":"term_exh","x":314.1875085,"y":107.18750849999998,"roomId":"idqm9k14s","auto":true},{"id":"id9ciphp6","type":"term_exh","x":377.4375065,"y":98.43750649999998,"roomId":"idy90xtc9","auto":true},{"id":"id2jzxjmh","type":"term_exh","x":444.5625095,"y":111.56250949999998,"roomId":"id4axnqhe","auto":true},{"id":"id2xk0cic","type":"term_sup","x":672.4375165,"y":150.43751649999996,"roomId":"idkdy7kb6","auto":true},{"id":"id55fh9wj","type":"term_exh","x":804.6875085,"y":111.56250949999998,"roomId":"idjig5fd5","auto":true},{"id":"idtqt2t3d","type":"term_sup","x":154.50000649999998,"y":348.0000065,"roomId":"idft9zsko","auto":true},{"id":"idqoo43hk","type":"term_sup","x":310.50001849999995,"y":348.0000065,"roomId":"idft9zsko","auto":true},{"id":"idp7l17pt","type":"term_sup","x":619.3750155,"y":344.87501549999996,"roomId":"idwtrl9cu","auto":true},{"id":"idnf26nnh","type":"term_exh","x":757.0625065,"y":298.1875075,"roomId":"idbh10aho","auto":true},{"id":"idwsw6qru","type":"term_exh","x":815.4375055,"y":293.5625065,"roomId":"idcrzqk76","auto":true},{"id":"occ1","type":"person","x":649.75,"y":178.75,"roomId":"idkdy7kb6"},{"id":"occ2","type":"person","x":677.75,"y":178.75,"roomId":"idkdy7kb6"},{"id":"occ3","type":"person","x":274.0,"y":376.75,"roomId":"idft9zsko"}],"segs":[{"id":"idlbnah6o","kind":"duct","a":"id68fyezj","b":"idobviiao","pts":[],"extraLen":0},{"id":"idnssgz3t","kind":"duct","a":"id68fyezj","b":"idvd6ru8r","pts":[],"extraLen":0},{"id":"id6t4oq46","kind":"duct","a":"id68fyezj","b":"idzshcpxv","pts":[{"x":538,"y":245.5}],"extraLen":0},{"id":"idqcxaaoj","kind":"duct","a":"id68fyezj","b":"idjce12ar","pts":[{"x":483.99999999999994,"y":245.5}],"extraLen":0},{"id":"id46h4o7j","kind":"duct","a":"id68fyezj","b":"id2ls3ym0","pts":[{"x":583,"y":245.5}],"extraLen":0},{"id":"idwmyk4tn","kind":"duct","a":"id68fyezj","b":"idplrisyr","pts":[{"x":601,"y":245.5}],"extraLen":0},{"id":"idjor1rzy","kind":"flx","a":"idzshcpxv","b":"id2xk0cic","pts":[],"extraLen":0},{"id":"idftks2ce","kind":"flx","a":"idzshcpxv","b":"idtqt2t3d","pts":[],"extraLen":0},{"id":"idig0pwzx","kind":"flx","a":"idzshcpxv","b":"idqoo43hk","pts":[],"extraLen":0},{"id":"id2b1wdml","kind":"flx","a":"idzshcpxv","b":"idp7l17pt","pts":[],"extraLen":0},{"id":"idsif26gz","kind":"flx","a":"idjce12ar","b":"idd7psxj8","pts":[],"extraLen":0},{"id":"ide8czx44","kind":"flx","a":"idjce12ar","b":"idy8uol15","pts":[],"extraLen":0},{"id":"id9so9p2z","kind":"flx","a":"idjce12ar","b":"idquaw320","pts":[],"extraLen":0},{"id":"idxt5hpjq","kind":"flx","a":"idjce12ar","b":"id16vyqsv","pts":[],"extraLen":0},{"id":"id5ljawl8","kind":"flx","a":"idjce12ar","b":"id9ciphp6","pts":[],"extraLen":0},{"id":"idscyckx5","kind":"flx","a":"idjce12ar","b":"id2jzxjmh","pts":[],"extraLen":0},{"id":"idot5zu94","kind":"flx","a":"idjce12ar","b":"id55fh9wj","pts":[],"extraLen":0},{"id":"idps7prb7","kind":"flx","a":"idjce12ar","b":"idnf26nnh","pts":[],"extraLen":0},{"id":"idpeqdfid","kind":"flx","a":"idjce12ar","b":"idwsw6qru","pts":[],"extraLen":0}]},{"id":"idrzrrx47","name":"Poddasze","h":2.6,"bg":null,"bgW":0,"bgH":0,"pxPerM":45,"rooms":[{"id":"idzqb1rq6","pts":[{"x":70,"y":70},{"x":331,"y":70},{"x":331,"y":241},{"x":70,"y":241}],"type":"pokoj","name":"2/3 Pokój 1","areaOverride":21.51,"osoby":2,"hOverride":null,"flowOverride":null},{"id":"id2hgj5sn","pts":[{"x":331,"y":70},{"x":412,"y":70},{"x":412,"y":241},{"x":331,"y":241}],"type":"lazienka","name":"2/4 Łazienka","areaOverride":6.81,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idys6erhq","pts":[{"x":412,"y":70},{"x":731.5,"y":70},{"x":731.5,"y":241},{"x":412,"y":241}],"type":"pokoj","name":"2/5 Pokój 2","areaOverride":26.84,"osoby":2,"hOverride":null,"flowOverride":null},{"id":"idri1fljo","pts":[{"x":731.5,"y":70},{"x":776.5,"y":70},{"x":776.5,"y":241},{"x":731.5,"y":241}],"type":"pralnia","name":"2/7 Pralnia","areaOverride":3.79,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idrgdtqqm","pts":[{"x":70,"y":241},{"x":250,"y":241},{"x":250,"y":326.49999999999994},{"x":70,"y":326.49999999999994}],"type":"komunikacja","name":"2/2 Komunikacja","areaOverride":7.53,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"id1uwk08j","pts":[{"x":250,"y":241},{"x":520,"y":241},{"x":520,"y":326.49999999999994},{"x":250,"y":326.49999999999994}],"type":"komunikacja","name":"2/6 Antresola","areaOverride":11.44,"osoby":null,"hOverride":null,"flowOverride":null},{"id":"idl1x3cdi","pts":[{"x":520,"y":241},{"x":650.5,"y":241},{"x":650.5,"y":326.49999999999994},{"x":520,"y":326.49999999999994}],"type":"komunikacja","name":"2/1 Antresola","areaOverride":5.4,"osoby":null,"hOverride":null,"flowOverride":null}],"nodes":[{"id":"idj3nczel","type":"riser","x":160,"y":281.5,"num":1,"extraLen":3.2},{"id":"idmggevnj","type":"riser","x":196,"y":281.5,"num":2,"extraLen":3.2},{"id":"idbk565ak","type":"man_sup","x":304,"y":281.5},{"id":"idvg0j41g","type":"man_exh","x":385,"y":281.5},{"id":"idxbaacvc","type":"term_sup","x":153.37501149999997,"y":153.37501149999997,"roomId":"idzqb1rq6","auto":true},{"id":"idw0kex3z","type":"term_exh","x":371.3750085,"y":110.37500849999998,"roomId":"id2hgj5sn","auto":true},{"id":"idmw5hmey","type":"term_sup","x":496.3125095,"y":154.31250949999998,"roomId":"idys6erhq","auto":true},{"id":"iduv3p917","type":"term_exh","x":752.8750045,"y":96.12500549999999,"roomId":"idri1fljo","auto":true},{"id":"occ4","type":"person","x":170.5,"y":185.5,"roomId":"idzqb1rq6"},{"id":"occ5","type":"person","x":541.75,"y":185.5,"roomId":"idys6erhq"}],"segs":[{"id":"idxco3gz8","kind":"duct","a":"idj3nczel","b":"idbk565ak","pts":[],"extraLen":0},{"id":"idi9fupb5","kind":"duct","a":"idmggevnj","b":"idvg0j41g","pts":[],"extraLen":0},{"id":"idaioe6ii","kind":"flx","a":"idbk565ak","b":"idxbaacvc","pts":[],"extraLen":0},{"id":"idfcjf6ee","kind":"flx","a":"idbk565ak","b":"idmw5hmey","pts":[],"extraLen":0},{"id":"idezkzl1b","kind":"flx","a":"idvg0j41g","b":"idw0kex3z","pts":[],"extraLen":0},{"id":"id5f1i4gq","kind":"flx","a":"idvg0j41g","b":"iduv3p917","pts":[],"extraLen":0}]}],"activeFloor":0,"author":"HVAC+ / 21 zmysłów (projekt demonstracyjny)","date":"2026-08-21","zoning":{"on":true,"dayZ1":40,"nightZ2":30}};
 function loadDemo(){ state=JSON.parse(JSON.stringify(DEMO_PROJECT)); state.activeFloor=0; state.date=new Date().toISOString().slice(0,10); sel=null; undoStack.length=0; redoStack.length=0; document.getElementById('projName').value=state.name||''; refreshAll(); fitView(); }
 
 let sel = null;               // {kind:'room'|'node'|'seg', floor, id}
 let tool = 'select';
+let roomEdit = null;       // id pomieszczenia w trybie edycji obrysu
+let bgAdjust = false;      // otwarty panel „Popraw” podkładu
 let show2dLabels = true;   // warstwa „opisy” w rzucie 2D (panel Warstwy)
 const undoStack = [];
 const redoStack = [];
@@ -210,6 +212,36 @@ function placeNodeAt(type,w,opt){
   return n;
 }
 
+/* ---------- edycja obrysu: trafienia w uchwyty ---------- */
+function roomEditRoom(){ return roomEdit? F().rooms.find(x=>x.id===roomEdit) : null; }
+function vertexAt(w){
+  const r=roomEditRoom(); if(!r) return -1;
+  const tol=8/view.z;
+  for(let i=0;i<r.pts.length;i++) if(dist(w,r.pts[i])<=tol) return i;
+  return -1;
+}
+function edgeMidAt(w){
+  const r=roomEditRoom(); if(!r) return -1;
+  const tol=8/view.z;
+  for(let i=0;i<r.pts.length;i++){
+    const p=r.pts[i], q=r.pts[(i+1)%r.pts.length];
+    if(dist(w,{x:(p.x+q.x)/2,y:(p.y+q.y)/2})<=tol) return i;
+  }
+  return -1;
+}
+function setRoomEdit(id){
+  roomEdit=id||null;
+  setHint(roomEdit?'Edycja obrysu: przeciągaj białe uchwyty. „+” na krawędzi dodaje punkt, Alt+klik na punkcie usuwa. Esc kończy.':(TOOL_HINTS[tool]||''));
+  refreshSide(); draw();
+}
+/* czy obrys jest prostokątem równoległym do osi — wtedy można podać wymiary liczbowo */
+function axisRect(pts){
+  if(!pts||pts.length!==4) return null;
+  const xs=[...new Set(pts.map(p=>Math.round(p.x*100)/100))], ys=[...new Set(pts.map(p=>Math.round(p.y*100)/100))];
+  if(xs.length!==2||ys.length!==2) return null;
+  return {x0:Math.min(...xs),x1:Math.max(...xs),y0:Math.min(...ys),y1:Math.max(...ys)};
+}
+
 /* ---------- hit-testing ---------- */
 function nodeAt(w,tol=12){ const f=F(); tol/=view.z; for(const n of [...f.nodes].reverse()){ if(dist(w,n)<=Math.max(tol,(NODE_DEFS[n.type].r+4)/view.z)) return n; } return null; }
 function roomAt(w){ const f=F(); for(const r of [...f.rooms].reverse()){ if(pointInPoly(w,r.pts)) return r; } return null; }
@@ -303,6 +335,25 @@ cv.addEventListener('mousedown',e=>{
   if(window.__mode3D) return;
   const w=s2w(e.offsetX,e.offsetY); mouse.down=true;
   if(e.button===1||e.button===2||tool==='pan'||spaceDown){ mouse.panStart={mx:e.offsetX,my:e.offsetY,vx:view.x,vy:view.y}; cv.style.cursor='grabbing'; return; }
+  if(roomEdit && tool==='select'){
+    const re=roomEditRoom();
+    const vi=vertexAt(w);
+    if(vi>=0){
+      if(e.altKey){
+        if(re.pts.length>3){ snapshot(); re.pts.splice(vi,1); recalc(); refreshAll(); }
+        else toast('Obrys musi mieć co najmniej trzy punkty.');
+        return;
+      }
+      snapshot(); mouse.dragVertex={room:re,i:vi}; return;
+    }
+    const ei=edgeMidAt(w);
+    if(ei>=0){
+      const p=re.pts[ei], q=re.pts[(ei+1)%re.pts.length];
+      snapshot(); re.pts.splice(ei+1,0,{x:(p.x+q.x)/2,y:(p.y+q.y)/2});
+      mouse.dragVertex={room:re,i:ei+1}; draw(); return;
+    }
+    if(!pointInPoly(w,re.pts)) setRoomEdit(null);   // klik poza pomieszczeniem kończy edycję
+  }
   if(tool==='select'){
     const n=nodeAt(w); if(n){ sel={kind:'node',id:n.id}; mouse.dragNode=n; snapshot(); refreshSide(); draw(); return; }
     const s=segAt(w); if(s){ sel={kind:'seg',id:s.id}; refreshSide(); draw(); return; }
@@ -316,10 +367,18 @@ cv.addEventListener('mousemove',e=>{
   const f=F();
   document.getElementById('stCoords').textContent = f.pxPerM? `${(w.x/f.pxPerM).toFixed(2)} m, ${(w.y/f.pxPerM).toFixed(2)} m` : `${w.x|0}, ${w.y|0} px`;
   if(mouse.panStart){ view.x=mouse.panStart.vx+(e.offsetX-mouse.panStart.mx); view.y=mouse.panStart.vy+(e.offsetY-mouse.panStart.my); draw(); return; }
+  if(mouse.dragVertex){ const v=mouse.dragVertex; v.room.pts[v.i].x=w.x; v.room.pts[v.i].y=w.y; recalc(); draw(); return; }
   if(mouse.dragNode){ mouse.dragNode.x=w.x; mouse.dragNode.y=w.y; if(mouse.dragNode.type==='person'||mouse.dragNode.type==='term_sup'||mouse.dragNode.type==='term_exh'){ const r=roomAt(w); mouse.dragNode.roomId=r?r.id:null; } recalc(); draw(); return; }
   if(draft) draw();
 });
-window.addEventListener('mouseup',()=>{ mouse.down=false; mouse.panStart=null; if(mouse.dragNode){ mouse.dragNode=null; refreshSide(); } if(tool==='pan') cv.style.cursor='grab'; });
+/* zakończenie przeciągania wierzchołka: mouseup, pointerup i wyjechanie kursorem
+   poza rysunek — żeby uchwyt nigdy nie „przyklejał się” do kursora */
+function endVertexDrag(){ if(!mouse.dragVertex) return; mouse.dragVertex=null; recalc(); refreshAll(); }
+window.addEventListener('pointerup',endVertexDrag);
+cv.addEventListener('mouseleave',endVertexDrag);
+window.addEventListener('mouseup',()=>{ mouse.down=false; mouse.panStart=null;
+  endVertexDrag();
+  if(mouse.dragNode){ mouse.dragNode=null; refreshSide(); } if(tool==='pan') cv.style.cursor='grab'; });
 
 cv.addEventListener('click',e=>{
   if(window.__mode3D) return;
@@ -367,7 +426,7 @@ cv.addEventListener('dblclick',e=>{ if(window.__mode3D) return; if(tool==='room'
 window.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
   if(e.code==='Space'){ spaceDown=true; cv.style.cursor='grab'; }
-  if(e.key==='Escape'){ draft=null; draw(); }
+  if(e.key==='Escape'){ draft=null; if(roomEdit) setRoomEdit(null); draw(); }
   if(e.key==='Enter'&&tool==='room'&&draft&&draft.pts.length>=3) finishRoom();
   if((e.key==='Delete'||e.key==='Backspace')&&sel){ deleteSel(); }
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){ e.shiftKey?redo():undo(); }
@@ -411,14 +470,20 @@ document.getElementById('zfit').addEventListener('click',fitView);
 function fitView(){
   if(window.__mode3D&&window.fit3D){ fit3D(); return; }
   const f=F(); let xs=[],ys=[];
-  if(f.bg){ xs.push(0,f.bgW); ys.push(0,f.bgH); }
+  if(f.bg){ const k=f.bgPrevK??1; xs.push(0,f.bgW*k); ys.push(0,f.bgH*k); }
   f.rooms.forEach(r=>r.pts.forEach(p=>{xs.push(p.x);ys.push(p.y);}));
   f.nodes.forEach(n=>{xs.push(n.x);ys.push(n.y);});
-  if(!xs.length){ view.x=40;view.y=40;view.z=1;draw();return; }
+  /* marginesy pod nakładki na rysunku: lewa kolumna narzędzi, zoom po prawej,
+     pasek stanu i legenda na dole — rysunek nie może się chować pod przyciskami */
+  const PAD={l:62,r:62,t:46,b:52};
+  if(!xs.length){ view.x=PAD.l;view.y=PAD.t;view.z=1;draw();return; }
   const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
   const W=cv.clientWidth,H=cv.clientHeight;
-  view.z=Math.min(W/(maxx-minx+80),H/(maxy-miny+80),4);
-  view.x=(W-(minx+maxx)*view.z)/2; view.y=(H-(miny+maxy)*view.z)/2; draw();
+  const aw=Math.max(50,W-PAD.l-PAD.r), ah=Math.max(50,H-PAD.t-PAD.b);
+  view.z=Math.min(aw/(maxx-minx+20),ah/(maxy-miny+20),4);
+  view.x=PAD.l+(aw-(maxx-minx)*view.z)/2-minx*view.z;
+  view.y=PAD.t+(ah-(maxy-miny)*view.z)/2-miny*view.z;
+  draw();
 }
 
 let toastT=null;
@@ -436,7 +501,8 @@ function draw(){
   if(f.bg){
     let img=bgCache[f.id];
     if(!img||img.src!==f.bg){ img=new Image(); img.src=f.bg; bgCache[f.id]=img; img.onload=()=>{f.bgW=img.naturalWidth;f.bgH=img.naturalHeight;draw();}; }
-    if(img.complete&&img.naturalWidth){ ctx.globalAlpha=f.bgAlpha??0.65; ctx.drawImage(img,0,0); ctx.globalAlpha=1; }
+    if(img.complete&&img.naturalWidth){ const k=f.bgPrevK??1; ctx.globalAlpha=f.bgAlpha??0.65;
+      ctx.drawImage(img,0,0,img.naturalWidth*k,img.naturalHeight*k); ctx.globalAlpha=1; }
   }
   // podgląd maski ścian / regionów
   if(f.maskPrev){
@@ -453,10 +519,10 @@ function draw(){
     const col = t.role==='exh'?'rgba(209,46,79,':'both'===t.role?'rgba(129,84,182,':t.role==='sup'?'rgba(45,98,190,':t.role==='excluded'?'rgba(142,144,150,':'rgba(142,144,150,';
     /* tło pomieszczenia: ten sam kolor rozbielony o połowę — jaśniejszy odcień,
        ale z dużo większym kryciem, więc przynależność pomieszczenia czyta się od razu */
-    const fillCol = t.role==='exh'?'rgba(232,150,167,':'both'===t.role?'rgba(192,169,218,':t.role==='sup'?'rgba(150,176,222,':'rgba(198,199,202,';
+    const fillCol = t.role==='exh'?'rgba(255,178,194,':'both'===t.role?'rgba(218,194,245,':t.role==='sup'?'rgba(158,194,255,':'rgba(221,223,227,';
     ctx.beginPath(); r.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath();
     const LIVEr=window.CTRL&&CTRL.connected&&CTRL.roomCO2&&CTRL.roomCO2[r.id]!=null, co2=LIVEr?CTRL.roomCO2[r.id]:null;
-    ctx.fillStyle=fillCol+(sel&&sel.kind==='room'&&sel.id===r.id?'0.52)':'0.30)'); ctx.fill();
+    ctx.fillStyle=fillCol+(sel&&sel.kind==='room'&&sel.id===r.id?'0.92)':'0.75)'); ctx.fill();
     if(LIVEr){ ctx.fillStyle=co2Color(co2, Math.min(0.55,Math.max(0,(co2-500)/1400))); ctx.fill(); }
     ctx.strokeStyle=col+'0.85)'; ctx.lineWidth=lw(sel&&sel.kind==='room'&&sel.id===r.id?3:1.6); ctx.stroke();
     if(!show2dLabels) return;
@@ -499,6 +565,31 @@ function draw(){
       ctx.fillStyle='#1C1C1E'; ctx.fillText(label,m2.x,m2.y-lw(6));
     }
   });
+  // uchwyty edycji obrysu pomieszczenia
+  if(roomEdit){
+    const re=f.rooms.find(x=>x.id===roomEdit);
+    if(re){
+      const hs=lw(5.5);
+      ctx.beginPath(); re.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath();
+      ctx.strokeStyle='#4ECB95'; ctx.lineWidth=lw(2.2); ctx.setLineDash([lw(7),lw(4)]); ctx.stroke(); ctx.setLineDash([]);
+      // „+” na środkach krawędzi — dodanie punktu
+      re.pts.forEach((p,i)=>{
+        const q=re.pts[(i+1)%re.pts.length], m={x:(p.x+q.x)/2,y:(p.y+q.y)/2};
+        ctx.beginPath(); ctx.arc(m.x,m.y,hs*0.8,0,7);
+        ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fill();
+        ctx.strokeStyle='#4ECB95'; ctx.lineWidth=lw(1.4); ctx.stroke();
+        ctx.strokeStyle='#22815E'; ctx.lineWidth=lw(1.6); ctx.beginPath();
+        ctx.moveTo(m.x-hs*0.4,m.y); ctx.lineTo(m.x+hs*0.4,m.y);
+        ctx.moveTo(m.x,m.y-hs*0.4); ctx.lineTo(m.x,m.y+hs*0.4); ctx.stroke();
+      });
+      // wierzchołki
+      re.pts.forEach(p=>{
+        ctx.beginPath(); ctx.rect(p.x-hs,p.y-hs,hs*2,hs*2);
+        ctx.fillStyle='#fff'; ctx.fill();
+        ctx.strokeStyle='#1C1C1E'; ctx.lineWidth=lw(1.8); ctx.stroke();
+      });
+    }
+  }
   // szkic segmentu w trakcie
   if(draft&&draft.type==='seg'){
     const a=f.nodes.find(n=>n.id===draft.a);
@@ -922,9 +1013,14 @@ function renderProj(el){
   <h4>Kondygnacja: ${esc(f.name)}</h4>
   <div class="field"><label>Nazwa kondygnacji</label><input type="text" id="pFName" value="${esc(f.name)}"></div>
   <div class="field"><label>Wysokość pomieszczeń [m]</label><input type="number" id="pFH" step="0.05" value="${f.h}"></div>
-  <div class="field"><label>Podkład (rzut)</label><span style="display:flex;gap:6px">${f.bg
-    ?`<button class="btn" id="pBgBtn">Popraw</button><button class="btn danger" id="pBgDel">Usuń</button>`
+  <div class="field"><label>Podkład (rzut)</label><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${f.bg
+    ?`<button class="btn ${bgAdjust?'acc':''}" id="pBgFix">Popraw</button><button class="btn" id="pBgBtn">Wgraj</button><button class="btn danger" id="pBgDel">Usuń</button>`
     :`<button class="btn" id="pBgBtn">Wgraj obraz / PDF…</button>`}</span></div>
+  ${f.bg&&bgAdjust?`<div style="background:var(--surface-sunken);border-radius:var(--radius-md);padding:10px 12px;margin:6px 0">
+    <div class="field"><label>Rozmiar podkładu</label><span><input type="range" id="pBgK" min="25" max="400" step="1" value="${Math.round((f.bgPrevK??1)*100)}" style="width:120px"> <b id="pBgKv" style="font-size:12px">${Math.round((f.bgPrevK??1)*100)}%</b></span></div>
+    <p class="note" style="margin:2px 0 8px">Podkład skaluje się od lewego górnego narożnika. Rozmiar: <b id="pBgSz">${Math.round(f.bgW*(f.bgPrevK??1))} × ${Math.round(f.bgH*(f.bgPrevK??1))} px</b>${f.pxPerM?` · <b>${fmt(f.bgW*(f.bgPrevK??1)/f.pxPerM,2)} × ${fmt(f.bgH*(f.bgPrevK??1)/f.pxPerM,2)} m</b>`:' · skala nieskalibrowana'}. Obrysy i instalacja zostają na miejscu — dopasuj podkład do nich.</p>
+    <button class="btn acc" id="pBgApply">Zastosuj rozmiar</button><button class="btn" id="pBgCancel">Anuluj</button>
+  </div>`:''}
   ${f.bg?`<div class="field"><label>Przezroczystość podkładu</label><input type="range" id="pBgA" min="0.1" max="1" step="0.05" value="${f.bgAlpha??0.65}"></div>`:''}
   <div class="field"><label>Skala</label><span style="font-size:12px">${f.pxPerM?f.pxPerM.toFixed(1)+' px/m':'<b style="color:var(--err)">nieskalibrowana</b>'} — <a href="#" id="pCalib">kalibruj</a></span></div>
   ${state.floors.length>1?`<button class="btn danger" id="pDelFloor">Usuń tę kondygnację</button>`:''}
@@ -948,6 +1044,19 @@ function renderProj(el){
   el.querySelector('#pFName').addEventListener('change',e=>{snapshot();f.name=e.target.value;refreshAll();});
   bindNum(el.querySelector('#pFH'),f,'h');
   el.querySelector('#pBgBtn').addEventListener('click',()=>document.getElementById('fileBg').click());
+  const bgFix=el.querySelector('#pBgFix');
+  if(bgFix) bgFix.addEventListener('click',()=>{ bgAdjust=!bgAdjust; if(!bgAdjust) F().bgPrevK=1; renderProj(el); draw(); });
+  const bgK=el.querySelector('#pBgK');
+  if(bgK) bgK.addEventListener('input',e=>{
+    const fl=F(); fl.bgPrevK=+e.target.value/100;
+    el.querySelector('#pBgKv').textContent=e.target.value+'%';
+    el.querySelector('#pBgSz').textContent=`${Math.round(fl.bgW*fl.bgPrevK)} × ${Math.round(fl.bgH*fl.bgPrevK)} px`;
+    draw();
+  });
+  const bgApply=el.querySelector('#pBgApply');
+  if(bgApply) bgApply.addEventListener('click',()=>{ applyBgScale(); });
+  const bgCancel=el.querySelector('#pBgCancel');
+  if(bgCancel) bgCancel.addEventListener('click',()=>{ F().bgPrevK=1; bgAdjust=false; renderProj(el); draw(); });
   const bgDel=el.querySelector('#pBgDel');
   if(bgDel) bgDel.addEventListener('click',()=>{
     if(!confirm('Usunąć podkład tej kondygnacji? Pomieszczenia i instalacja zostaną nietknięte.')) return;
@@ -1067,6 +1176,11 @@ function renderProps(){
     box.innerHTML=`<h3>Pomieszczenie</h3>
     <div class="field"><label>Nazwa</label><input type="text" id="prName" value="${esc(r.name)}" placeholder="${esc(roomName(r))}"></div>
     <div class="field"><label>Typ</label><select id="prType">${Object.entries(ROOM_TYPES).map(([k,v])=>`<option value="${k}" ${k===r.type?'selected':''}>${v.label}</option>`).join('')}</select></div>
+    <div class="field"><label>Obrys pomieszczenia</label><button class="btn ${roomEdit===r.id?'acc':''}" id="prEdit">${roomEdit===r.id?'Zakończ edycję':'Edytuj obrys'}</button></div>
+    ${(()=>{ const q=axisRect(r.pts); if(!q||!f.pxPerM) return '';
+      return `<div class="field"><label>Szerokość [m]</label><input type="number" id="prBw" step="0.05" min="0.2" value="${((q.x1-q.x0)/f.pxPerM).toFixed(2)}"></div>
+              <div class="field"><label>Głębokość [m]</label><input type="number" id="prBh" step="0.05" min="0.2" value="${((q.y1-q.y0)/f.pxPerM).toFixed(2)}"></div>`; })()}
+    ${roomEdit===r.id?`<p class="note">Przeciągaj białe uchwyty, aby zmienić kształt. „+” na krawędzi dodaje punkt, <b>Alt + klik</b> na punkcie usuwa go. Esc kończy edycję.</p>`:''}
     ${(t.role==='sup'||t.role==='both')?((window.CALC||{}).personsFromPlan?`<div class="field"><label>Mieszkańcy w pomieszczeniu (z rzutu)</label><b>${(CALC.occByRoom||{})[r.id]||0}</b></div>`:`<div class="field"><label>Liczba osób (waga nawiewu)</label><input type="number" id="prOs" min="0" step="1" value="${r.osoby??t.osoby??1}"></div>`):''}
     ${(t.role==='exh'||t.role==='both')?`<div class="field"><label>Wywiew — nadpisz [m³/h]</label><input type="number" id="prFlow" placeholder="auto" value="${r.flowOverride??''}"></div>`:''}
     <div class="field"><label>Powierzchnia [m²] (z rzutu)</label><input type="number" id="prA" step="0.01" placeholder="${fmt((window.CALC.rooms[r.id]||{}).area,2)}" value="${r.areaOverride??''}"></div>
@@ -1076,6 +1190,19 @@ function renderProps(){
     const pz=box.querySelector('#prZone'); if(pz) pz.addEventListener('change',e=>{snapshot(); r.zone=e.target.value==='auto'?null:+e.target.value; refreshAll();});
     box.querySelector('#prName').addEventListener('change',e=>{snapshot();r.name=e.target.value;refreshAll();});
     box.querySelector('#prType').addEventListener('change',e=>{snapshot();r.type=e.target.value;refreshAll();});
+    box.querySelector('#prEdit').addEventListener('click',()=>{ setTool('select'); setRoomEdit(roomEdit===r.id?null:r.id); });
+    const bw=box.querySelector('#prBw'), bh=box.querySelector('#prBh');
+    /* wymiary prostokąta: skalowanie od lewego górnego narożnika */
+    const resize=(newW,newH)=>{
+      const q=axisRect(r.pts); if(!q) return;
+      snapshot();
+      const kx=newW!=null? (newW*f.pxPerM)/(q.x1-q.x0) : 1;
+      const ky=newH!=null? (newH*f.pxPerM)/(q.y1-q.y0) : 1;
+      r.pts=r.pts.map(p=>({x:q.x0+(p.x-q.x0)*kx, y:q.y0+(p.y-q.y0)*ky}));
+      r.areaOverride=null; recalc(); refreshAll();
+    };
+    if(bw) bw.addEventListener('change',e=>{ const v=parseFloat(String(e.target.value).replace(',','.')); if(v>0.1) resize(v,null); });
+    if(bh) bh.addEventListener('change',e=>{ const v=parseFloat(String(e.target.value).replace(',','.')); if(v>0.1) resize(null,v); });
     const os=box.querySelector('#prOs'); if(os) os.addEventListener('change',e=>{snapshot();r.osoby=e.target.value===''?null:+e.target.value;refreshAll();});
     const fl=box.querySelector('#prFlow'); if(fl) fl.addEventListener('change',e=>{snapshot();r.flowOverride=e.target.value===''?null:+e.target.value;refreshAll();});
     const pa=box.querySelector('#prA'); if(pa) pa.addEventListener('change',e=>{snapshot();r.areaOverride=e.target.value===''?null:+e.target.value;refreshAll();});
@@ -1991,6 +2118,24 @@ async function handleBgFile(file){
     const img=new Image(); img.onload=()=>{ f.bgW=img.naturalWidth; f.bgH=img.naturalHeight; fitView(); }; img.src=rd.result;
     toast('Podkład wczytany — teraz „Rozpoznaj pomieszczenia” (Automatyzacja) albo Kalibracja skali.'); };
   rd.readAsDataURL(file);
+}
+
+/* ---------- zmiana rozmiaru podkładu ---------- */
+function applyBgScale(){
+  const f=F(), k=f.bgPrevK??1;
+  if(!f.bg){ return; }
+  if(Math.abs(k-1)<0.005){ f.bgPrevK=1; bgAdjust=false; refreshAll(); return; }
+  const img=bgCache[f.id];
+  if(!img||!img.complete||!img.naturalWidth){ toast('Podkład jeszcze się wczytuje — spróbuj za chwilę.'); return; }
+  const w=Math.max(1,Math.round(img.naturalWidth*k)), h=Math.max(1,Math.round(img.naturalHeight*k));
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
+  g.drawImage(img,0,0,w,h);
+  snapshot();
+  f.bg=c.toDataURL('image/png'); f.bgW=w; f.bgH=h; f.bgPrevK=1; f.maskPrev=null;
+  delete bgCache[f.id]; maskCache.key=null;
+  bgAdjust=false; refreshAll();
+  toast(`Rozmiar podkładu zmieniony na ${w} × ${h} px. Skala rysunku bez zmian — w razie potrzeby przelicz ją narzędziem „Kalibracja skali”.`);
 }
 
 /* ---------- strefa wgrywania (drag & drop) ---------- */
