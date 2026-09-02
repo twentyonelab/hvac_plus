@@ -20,15 +20,16 @@
   const saveGroups=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(groups)); }catch(e){} };
   document.querySelectorAll('.tgroup').forEach(g=>{
     const id=g.dataset.group;
+    const COLLAPSED_BY_DEFAULT=['auto','edit','legend'];
     if(groups[id]===true) g.classList.add('collapsed');
-    else if(groups[id]===undefined && id==='legend') g.classList.add('collapsed');
+    else if(groups[id]===undefined && COLLAPSED_BY_DEFAULT.includes(id)) g.classList.add('collapsed');
     $('.tgroup-h',g).addEventListener('click',()=>{
       g.classList.toggle('collapsed');
       groups[id]=g.classList.contains('collapsed'); saveGroups();
     });
   });
   function revealTool(t){
-    const b=document.querySelector('.tbtn[data-tool="'+t+'"]'); const g=b&&b.closest('.tgroup');
+    const b=document.querySelector('[data-tool="'+t+'"]'); const g=b&&b.closest('.tgroup');
     if(g&&g.classList.contains('collapsed')){ g.classList.remove('collapsed'); groups[g.dataset.group]=false; saveGroups(); }
   }
   const _setTool=window.setTool;

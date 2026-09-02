@@ -181,6 +181,22 @@ function setTool(t){
 }
 document.querySelectorAll('#toolbar .tbtn[data-tool]').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.tool)));
 
+/* wstawienie węzła w punkcie — wspólna ścieżka dla kliknięcia narzędziem
+   i dla upuszczenia karty z szyny narzędzi (drag & drop, js/dnd.js) */
+function placeNodeAt(type,w,opt){
+  opt=opt||{};
+  const f=F();
+  snapshot();
+  const n={id:uid(),type:type,x:w.x,y:w.y};
+  if(type==='riser'){ n.num = 1+Math.max(0,...state.floors.flatMap(fl=>fl.nodes.filter(x=>x.type==='riser').map(x=>x.num||0))); n.extraLen=3; }
+  if(type==='term_sup'||type==='term_exh'){ const r=roomAt(w); n.roomId=r?r.id:null; if(!r) toast('Uwaga: anemostat poza obrysem pomieszczenia — nie zostanie policzony w bilansie.'); }
+  if(type==='person'){ const r=roomAt(w); n.roomId=r?r.id:null; if(!r) toast('Mieszkaniec poza pomieszczeniem — nie wpływa na bilans.'); }
+  f.nodes.push(n); sel={kind:'node',id:n.id};
+  if(opt.armSelect) setTool('select');
+  recalc(); refreshAll();
+  return n;
+}
+
 /* ---------- hit-testing ---------- */
 function nodeAt(w,tol=12){ const f=F(); tol/=view.z; for(const n of [...f.nodes].reverse()){ if(dist(w,n)<=Math.max(tol,(NODE_DEFS[n.type].r+4)/view.z)) return n; } return null; }
 function roomAt(w){ const f=F(); for(const r of [...f.rooms].reverse()){ if(pointInPoly(w,r.pts)) return r; } return null; }
@@ -312,14 +328,7 @@ cv.addEventListener('click',e=>{
     draw(); return;
   }
   if(tool==='wand'){ if(window.wandAt) wandAt(w); return; }
-  if(NODE_DEFS[tool]){
-    snapshot();
-    const n={id:uid(),type:tool,x:w.x,y:w.y};
-    if(tool==='riser'){ n.num = 1+Math.max(0,...state.floors.flatMap(fl=>fl.nodes.filter(x=>x.type==='riser').map(x=>x.num||0))); n.extraLen=3; }
-    if(tool==='term_sup'||tool==='term_exh'){ const r=roomAt(w); n.roomId=r?r.id:null; if(!r) toast('Uwaga: anemostat poza obrysem pomieszczenia — nie zostanie policzony w bilansie.'); }
-    if(tool==='person'){ const r=roomAt(w); n.roomId=r?r.id:null; if(!r) toast('Mieszkaniec poza pomieszczeniem — nie wpływa na bilans.'); }
-    f.nodes.push(n); sel={kind:'node',id:n.id}; if(tool!=='person') setTool('select'); recalc(); refreshAll(); return;
-  }
+  if(NODE_DEFS[tool]){ placeNodeAt(tool,w,{armSelect:tool!=='person'}); return; }
   if(tool==='duct'||tool==='flx'){
     const n=nodeAt(w);
     if(!draft){

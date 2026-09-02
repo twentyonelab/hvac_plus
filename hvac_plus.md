@@ -8,7 +8,7 @@ Aplikacja webowa 21 zmysłów do projektowania wentylacji mechanicznej z odzyski
 
 1. Podkład: wgranie rzutu (PDF / PNG / JPG), kalibracja skali.
 2. Pomieszczenia: obrys ręczny, rozpoznawanie automatyczne z rysunku (maska ścian + OCR), mieszkańcy na rzucie.
-3. Urządzenia i sieć: centrala, rozdzielacze, anemostaty, czerpnia, wyrzutnia, piony, kanały spiro i przewody FLX.
+3. Urządzenia i sieć: centrala, rozdzielacze, anemostaty, czerpnia, wyrzutnia, piony, kanały spiro i przewody FLX. Urządzenia wstawia się **przeciągnięciem karty** z szyny narzędzi na rzut albo kliknięciem karty i kliknięciem na rzucie.
 4. Obliczenia: bilans powietrza (PN-83/B-03430, WT §147–155), strefy dzień/noc, wymiarowanie przewodów, spręż, dobór centrali HRU, zestawienie materiałów, lista kontrolna zgodności.
 5. Widok 3D (aksonometria), symulator sterowania (Modbus / GATE), raport do wydruku z arkuszami rysunkowymi.
 
@@ -21,6 +21,7 @@ js/engine-core.js     dane normowe, stan, canvas 2D, obliczenia, panele, automat
 js/engine-3d.js       aksonometria instalacji
 js/engine-ctrl.js     wirtualne sterowanie centralą (cyfrowy bliźniak)
 js/ui.js              nakładka UI: zwijane grupy narzędzi, pigułki kondygnacji, KPI, tytuł sceny
+js/dnd.js             przeciąganie kart urządzeń na rzut (Pointer Events, podgląd na canvasie)
 assets/fonts          Outfit (variable, latin + latin-ext)
 assets/icons          ikony Lucide z systemu 21 Apps
 assets/logo-21zmyslow.svg, assets/sygnet-21zmyslow.svg   logo firmowe
@@ -35,6 +36,8 @@ Warstwa wizualna przeniesiona z **21 Apps Smart Home Dashboard**: Outfit, białe
 
 - **Silnik obliczeniowy bez zmian funkcjonalnych.** Skórka i układ są nowe, logika i format pliku projektu (`*.hvacplus.json`) pozostają zgodne z poprzednią wersją HVAC+ ALNOR.
 - **Vanilla JS, brak bundlera.** Jeden `index.html` + trzy skrypty silnika + `ui.js`. Łatwe hostowanie na Pages, zero zależności poza pdf.js z CDN (tylko do podkładów PDF).
+- **Drag & drop bez frameworka.** Pointer Events plus podgląd rysowany wprost na canvasie (podświetlone pomieszczenie, pierścień celu, symbol elementu). React nic tu nie wnosi — stan przeciągania to jeden obiekt, a rysunek i tak jest imperatywny (canvas), więc warstwa wirtualnego DOM byłaby kosztem bez korzyści.
+- **Jedna ścieżka wstawiania elementu.** `placeNodeAt(type, punkt)` w silniku obsługuje i kliknięcie narzędziem, i upuszczenie karty. Reguły (numer pionu, przypisanie do pomieszczenia, ostrzeżenia) nie mogą się rozjechać między trybami.
 - **UI podmienia globalne funkcje renderujące** (`renderFloorbar`, `refreshAll`, `setTool`) zamiast edytować silnik. Aktualizacja silnika = podmiana plików `engine-*.js`.
 
 ## Publikacja (GitHub Pages)
