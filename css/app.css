@@ -318,6 +318,7 @@ body.dnd,body.dnd *{cursor:grabbing !important}
 #legendBtn:hover{background:var(--surface-card);box-shadow:var(--shadow-raised)}
 #legendBtn[aria-expanded=true]{background:var(--gray-900);color:var(--text-inverse)}
 #legendBtn .i{width:13px;height:13px}
+#legendPop[hidden]{display:none}   /* własne display:grid wygrywa z domyślnym [hidden] */
 #legendPop{width:288px;padding:12px 14px;border-radius:var(--radius-md);background:var(--glass-fill);backdrop-filter:var(--blur-glass);-webkit-backdrop-filter:var(--blur-glass);box-shadow:var(--shadow-float);display:grid;grid-template-columns:1fr 1fr;gap:7px 14px}
 #legendPop .lg{display:flex;align-items:center;gap:7px;font:var(--type-meta);font-size:10.8px;color:var(--text-secondary);white-space:nowrap}
 #legendPop .lg i{flex:0 0 16px;width:16px;height:4px;border-radius:2px}

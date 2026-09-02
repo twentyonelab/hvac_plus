@@ -156,7 +156,7 @@ function render3D(g,W,H,cam,opts){
         const t=ROOM_TYPES[r.type]||{}, col=v3RoomColor(t.role);
         const flo=r.pts.map(p=>{ const w=v3W(fl,p); return v3P(w.X,w.Y,fl.z0,cam); });
         g.beginPath(); flo.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath();
-        g.fillStyle=col+(f.bg&&v3.showBg?'0.16)':'0.22)'); g.fill();
+        g.fillStyle=col+(f.bg&&v3.showBg?'0.08)':'0.11)'); g.fill();
         if(window.CTRL&&CTRL.connected&&CTRL.roomCO2&&CTRL.roomCO2[r.id]!=null){ const c2=CTRL.roomCO2[r.id]; g.fillStyle=co2Color(c2,Math.min(0.5,Math.max(0,(c2-500)/1400))); g.fill(); }
         g.strokeStyle=col+'0.9)'; g.lineWidth=1.4; g.stroke();
         if(v3.showWalls){

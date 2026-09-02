@@ -88,11 +88,10 @@
   $('#projName').addEventListener('input',e=>{ state.name=e.target.value; updateStage(); });
 
   /* ---------- legenda (przycisk w prawym dolnym rogu sceny) ---------- */
-  const lgBtn=$('#legendBtn'), lgPop=$('#legendPop'), LGK='hvacplus.ui.legend';
-  const lgSet=open=>{ lgPop.hidden=!open; lgBtn.setAttribute('aria-expanded',String(open));
-    try{ localStorage.setItem(LGK,open?'1':'0'); }catch(e){} };
-  let lgOpen=false; try{ lgOpen=localStorage.getItem(LGK)==='1'; }catch(e){}
-  lgSet(lgOpen);
+  const lgBtn=$('#legendBtn'), lgPop=$('#legendPop');
+  const lgSet=open=>{ lgPop.hidden=!open; lgBtn.setAttribute('aria-expanded',String(open)); };
+  lgSet(false);   // po otwarciu aplikacji legenda jest zwinięta
+  try{ localStorage.removeItem('hvacplus.ui.legend'); }catch(e){}
   lgBtn.addEventListener('click',e=>{ e.stopPropagation(); lgSet(lgPop.hidden); });
   document.addEventListener('click',e=>{ if(!lgPop.hidden && !$('#legend').contains(e.target)) lgSet(false); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!lgPop.hidden) lgSet(false); });

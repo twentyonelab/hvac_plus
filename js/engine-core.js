@@ -427,7 +427,7 @@ function draw(){
     const col = t.role==='exh'?'rgba(209,46,79,':'both'===t.role?'rgba(129,84,182,':t.role==='sup'?'rgba(45,98,190,':t.role==='excluded'?'rgba(142,144,150,':'rgba(142,144,150,';
     ctx.beginPath(); r.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath();
     const LIVEr=window.CTRL&&CTRL.connected&&CTRL.roomCO2&&CTRL.roomCO2[r.id]!=null, co2=LIVEr?CTRL.roomCO2[r.id]:null;
-    ctx.fillStyle=col+(sel&&sel.kind==='room'&&sel.id===r.id?'0.28)':'0.13)'); ctx.fill();
+    ctx.fillStyle=col+(sel&&sel.kind==='room'&&sel.id===r.id?'0.14)':'0.065)'); ctx.fill();
     if(LIVEr){ ctx.fillStyle=co2Color(co2, Math.min(0.55,Math.max(0,(co2-500)/1400))); ctx.fill(); }
     ctx.strokeStyle=col+'0.85)'; ctx.lineWidth=lw(sel&&sel.kind==='room'&&sel.id===r.id?3:1.6); ctx.stroke();
     const c=polyCentroid(r.pts), info=(C.rooms||{})[r.id];
