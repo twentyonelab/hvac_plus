@@ -79,11 +79,11 @@ svg.i{width:16px;height:16px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-
 
 /* ---------- pasek górny ---------- */
 #topbar{display:flex;align-items:center;gap:var(--space-8);padding:14px 20px 6px 20px;flex:0 0 auto}
-.brand{display:flex;flex-direction:column;gap:3px;flex:0 0 auto;padding-right:var(--space-5);border-right:1px solid var(--border-soft);margin-right:var(--space-2)}
+.brand{display:flex;flex-direction:row;align-items:center;gap:16px;flex:0 0 auto;padding:0 18px 0 2px;border-right:1px solid var(--border-soft);margin-right:var(--space-4)}
 .brand-logo{height:34px;width:auto;color:var(--brand);display:block}
-.brand-sub{display:inline-flex;align-items:flex-start;gap:1px;font:500 12px/1 var(--font-core);letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);padding-left:2px}
+.brand-sub{display:inline-block;font:500 13px/1 var(--font-core);letter-spacing:.05em;text-transform:uppercase;color:var(--text-secondary);white-space:nowrap;padding-left:14px;border-left:1px solid var(--border-soft)}
 .brand-sub b{font-weight:600;color:var(--text-primary);letter-spacing:.04em}
-.brand-sub sup{font-size:8px;line-height:1;margin-top:-2px;font-weight:500;letter-spacing:0}
+.brand-sub sup{font-size:8.5px;line-height:0;vertical-align:super;font-weight:500;letter-spacing:0;margin-left:1px}
 .projfield{display:flex;align-items:center;gap:var(--space-5);flex:0 1 380px;min-width:200px;height:var(--control-height-lg);padding:0 8px 0 16px;border-radius:var(--radius-pill);background:var(--surface-sunken);color:var(--text-secondary)}
 .projfield input{flex:1;min-width:0;border:none;outline:none;background:transparent;font:var(--type-ui);color:var(--text-primary)}
 .projfield input::placeholder{color:var(--text-tertiary);font-weight:400}
@@ -130,7 +130,6 @@ svg.i{width:16px;height:16px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-
 #stageTitle{font:var(--type-display);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #stageSub{display:flex;align-items:center;gap:6px;font:var(--type-meta);color:var(--text-secondary);margin-top:6px;min-width:0}
 #stageSubTxt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#stageSub .i{width:12px;height:12px}
 #floorbar{display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap;justify-content:flex-end;padding-top:4px}
 #floorbar button{height:var(--control-height-md);padding:0 20px;border:none;border-radius:var(--radius-pill);background:var(--surface-card);color:var(--text-primary);font:var(--type-ui);box-shadow:var(--shadow-card);cursor:pointer;transition:var(--transition-control);display:inline-flex;align-items:center;gap:8px}
 #floorbar button:hover{box-shadow:var(--shadow-raised)}
@@ -147,7 +146,7 @@ svg.i{width:16px;height:16px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-
 #zoombar button:hover{box-shadow:var(--shadow-raised)}
 #zoombar button .i{width:16px;height:16px}
 #hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:var(--gray-900);color:var(--text-inverse);padding:8px 16px;border-radius:var(--radius-pill);font:var(--type-meta);font-size:12px;line-height:1.35;pointer-events:none;max-width:68%;text-align:center;box-shadow:var(--shadow-float);transition:opacity .3s}
-#statusbar{position:absolute;left:14px;bottom:14px;z-index:5;display:flex;gap:16px;align-items:center;padding:7px 14px;border-radius:var(--radius-pill);background:var(--glass-fill);backdrop-filter:var(--blur-glass);-webkit-backdrop-filter:var(--blur-glass);box-shadow:var(--shadow-card);font:var(--type-meta);color:var(--text-secondary);pointer-events:none;max-width:26%;white-space:nowrap;overflow:hidden}
+#statusbar{position:absolute;left:14px;bottom:14px;z-index:5;display:flex;gap:16px;align-items:center;padding:7px 14px;border-radius:var(--radius-pill);background:var(--glass-fill);backdrop-filter:var(--blur-glass);-webkit-backdrop-filter:var(--blur-glass);box-shadow:var(--shadow-card);font:var(--type-meta);color:var(--text-secondary);pointer-events:none;max-width:32%;white-space:nowrap;overflow:hidden}
 #statusbar #stSel{color:var(--text-primary)}
 #statusbar span:empty{display:none}
 

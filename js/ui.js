@@ -55,20 +55,7 @@
 
   function updateStage(){
     const f=F(); if(!f) return;
-    const C=window.CALC||{};
-    const title=$('#stageTitle'), sub=$('#stageSubTxt');
-    const name=(state.name||$('#projName').value||'').trim();
-    if(window.__mode3D){
-      title.textContent='Widok 3D';
-      sub.textContent=`${name||'Projekt bez nazwy'} · aksonometria · ${state.floors.length} ${state.floors.length===1?'kondygnacja':'kondygnacje'}`;
-      return;
-    }
-    title.textContent=f.name||'Kondygnacja';
-    const area=f.rooms.reduce((a,r)=>a+(((C.rooms||{})[r.id]||{}).area||0),0);
-    const parts=[name||'Projekt bez nazwy', `${f.rooms.length} ${f.rooms.length===1?'pomieszczenie':f.rooms.length<5&&f.rooms.length>0?'pomieszczenia':'pomieszczeń'}`];
-    if(area>0) parts.push(`${fmt(area,1)} m²`);
-    if(!f.pxPerM) parts.push('skala nieskalibrowana');
-    sub.textContent=parts.join(' · ');
+    $('#stageTitle').textContent = window.__mode3D ? 'Widok 3D' : (f.name||'Kondygnacja');
   }
 
   /* ---------- KPI w panelu prawym ---------- */
@@ -83,7 +70,7 @@
   window.refreshAll=function(){ _refreshAll(); updateKpis(); };
 
   /* nazwa projektu → podtytuł sceny na żywo */
-  $('#projName').addEventListener('input',e=>{ state.name=e.target.value; updateStage(); });
+  $('#projName').addEventListener('input',e=>{ state.name=e.target.value; });
 
   /* ---------- legenda (przycisk w prawym dolnym rogu sceny) ---------- */
   const lgBtn=$('#legendBtn'), lgPop=$('#legendPop');

@@ -171,6 +171,7 @@ const TOOL_HINTS={
   calib:'Kliknij dwa punkty o znanej odległości na podkładzie (np. długość ściany z wymiarem).',
   roi:'Kliknij dwa przeciwległe narożniki obszaru analizy — obejmij sam budynek, bez łańcuchów wymiarowych i tabeli rysunkowej.',
   room:'Klikaj kolejne narożniki pomieszczenia. Podwójny klik lub Enter — zamknij obrys. Esc — anuluj.',
+  room_rect:'Kliknij jeden narożnik pomieszczenia, potem przeciwległy — program zamknie prostokątny obrys. Esc — anuluj.',
   wand:'Klikaj WNĘTRZE pomieszczenia — program sam obrysuje je po ścianach. Kolejne kliknięcie w to samo pomieszczenie odświeża obrys.',
   ahu:'Kliknij miejsce montażu centrali wentylacyjnej.',
   man_sup:'Kliknij miejsce skrzynki rozdzielczej NAWIEWU (np. nad sufitem korytarza).',
@@ -334,6 +335,11 @@ cv.addEventListener('click',e=>{
     if(!draft) draft={type:'room',pts:[]};
     draft.pts.push(w); draw(); return;
   }
+  if(tool==='room_rect'){
+    if(!draft) draft={type:'rect',pts:[w]};
+    else finishRoomRect(draft.pts[0],w);
+    draw(); return;
+  }
   if(tool==='roi'){
     if(!draft) draft={type:'roi',pts:[w]};
     else { const a=draft.pts[0]; draft=null; if(window.setROI) setROI(a,w); setTool('select'); }
@@ -369,9 +375,16 @@ window.addEventListener('keydown',e=>{
 });
 window.addEventListener('keyup',e=>{ if(e.code==='Space'){ spaceDown=false; cv.style.cursor=tool==='pan'?'grab':'default'; } });
 
-function finishRoom(){
+function finishRoom(){ addRoom(draft.pts); }
+/* prostokąt z dwóch przeciwległych narożników */
+function finishRoomRect(a,b){
+  if(Math.abs(b.x-a.x)<2||Math.abs(b.y-a.y)<2){ draft=null; toast('Zbyt mały prostokąt — kliknij przeciwległy narożnik dalej.'); return; }
+  const x0=Math.min(a.x,b.x), x1=Math.max(a.x,b.x), y0=Math.min(a.y,b.y), y1=Math.max(a.y,b.y);
+  addRoom([{x:x0,y:y0},{x:x1,y:y0},{x:x1,y:y1},{x:x0,y:y1}]);
+}
+function addRoom(pts){
   snapshot(); const f=F();
-  const r={id:uid(),pts:draft.pts,type:'sypialnia',name:'',osoby:null,hOverride:null,flowOverride:null};
+  const r={id:uid(),pts,type:'sypialnia',name:'',osoby:null,hOverride:null,flowOverride:null};
   f.rooms.push(r); draft=null; sel={kind:'room',id:r.id};
   setTool('select'); recalc(); refreshAll();
 }
@@ -438,9 +451,12 @@ function draw(){
   f.rooms.forEach(r=>{
     const t=ROOM_TYPES[r.type]||{};
     const col = t.role==='exh'?'rgba(209,46,79,':'both'===t.role?'rgba(129,84,182,':t.role==='sup'?'rgba(45,98,190,':t.role==='excluded'?'rgba(142,144,150,':'rgba(142,144,150,';
+    /* tło pomieszczenia: ten sam kolor rozbielony o połowę — jaśniejszy odcień,
+       ale z dużo większym kryciem, więc przynależność pomieszczenia czyta się od razu */
+    const fillCol = t.role==='exh'?'rgba(232,150,167,':'both'===t.role?'rgba(192,169,218,':t.role==='sup'?'rgba(150,176,222,':'rgba(198,199,202,';
     ctx.beginPath(); r.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath();
     const LIVEr=window.CTRL&&CTRL.connected&&CTRL.roomCO2&&CTRL.roomCO2[r.id]!=null, co2=LIVEr?CTRL.roomCO2[r.id]:null;
-    ctx.fillStyle=col+(sel&&sel.kind==='room'&&sel.id===r.id?'0.14)':'0.065)'); ctx.fill();
+    ctx.fillStyle=fillCol+(sel&&sel.kind==='room'&&sel.id===r.id?'0.52)':'0.30)'); ctx.fill();
     if(LIVEr){ ctx.fillStyle=co2Color(co2, Math.min(0.55,Math.max(0,(co2-500)/1400))); ctx.fill(); }
     ctx.strokeStyle=col+'0.85)'; ctx.lineWidth=lw(sel&&sel.kind==='room'&&sel.id===r.id?3:1.6); ctx.stroke();
     if(!show2dLabels) return;
@@ -490,6 +506,17 @@ function draw(){
     const dp=orthoPath([a,...draft.pts,mp]);
     ctx.beginPath(); dp.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
     ctx.strokeStyle='#1C1C1E'; ctx.lineWidth=lw(2); ctx.setLineDash([lw(6),lw(4)]); ctx.stroke(); ctx.setLineDash([]);
+  }
+  if(draft&&draft.type==='rect'){
+    const a=draft.pts[0];
+    ctx.strokeStyle='#22815E'; ctx.lineWidth=lw(2); ctx.setLineDash([lw(6),lw(4)]);
+    ctx.strokeRect(Math.min(a.x,mouse.wx),Math.min(a.y,mouse.wy),Math.abs(mouse.wx-a.x),Math.abs(mouse.wy-a.y));
+    ctx.setLineDash([]);
+    if(F().pxPerM){
+      const wm=Math.abs(mouse.wx-a.x)/F().pxPerM, hm=Math.abs(mouse.wy-a.y)/F().pxPerM;
+      ctx.fillStyle='#1C1C1E'; ctx.font=`600 ${lw(11.5)}px Outfit, Segoe UI`; ctx.textAlign='center';
+      ctx.fillText(`${fmt(wm,2)} × ${fmt(hm,2)} m = ${fmt(wm*hm,1)} m²`,(a.x+mouse.wx)/2,Math.min(a.y,mouse.wy)-lw(7));
+    }
   }
   if(draft&&draft.type==='room'){
     ctx.beginPath(); draft.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.lineTo(mouse.wx,mouse.wy);
@@ -895,7 +922,9 @@ function renderProj(el){
   <h4>Kondygnacja: ${esc(f.name)}</h4>
   <div class="field"><label>Nazwa kondygnacji</label><input type="text" id="pFName" value="${esc(f.name)}"></div>
   <div class="field"><label>Wysokość pomieszczeń [m]</label><input type="number" id="pFH" step="0.05" value="${f.h}"></div>
-  <div class="field"><label>Podkład (rzut)</label><button class="btn" id="pBgBtn">${f.bg?'Zamień…':'Wgraj obraz / PDF…'}</button></div>
+  <div class="field"><label>Podkład (rzut)</label><span style="display:flex;gap:6px">${f.bg
+    ?`<button class="btn" id="pBgBtn">Popraw</button><button class="btn danger" id="pBgDel">Usuń</button>`
+    :`<button class="btn" id="pBgBtn">Wgraj obraz / PDF…</button>`}</span></div>
   ${f.bg?`<div class="field"><label>Przezroczystość podkładu</label><input type="range" id="pBgA" min="0.1" max="1" step="0.05" value="${f.bgAlpha??0.65}"></div>`:''}
   <div class="field"><label>Skala</label><span style="font-size:12px">${f.pxPerM?f.pxPerM.toFixed(1)+' px/m':'<b style="color:var(--err)">nieskalibrowana</b>'} — <a href="#" id="pCalib">kalibruj</a></span></div>
   ${state.floors.length>1?`<button class="btn danger" id="pDelFloor">Usuń tę kondygnację</button>`:''}
@@ -919,6 +948,13 @@ function renderProj(el){
   el.querySelector('#pFName').addEventListener('change',e=>{snapshot();f.name=e.target.value;refreshAll();});
   bindNum(el.querySelector('#pFH'),f,'h');
   el.querySelector('#pBgBtn').addEventListener('click',()=>document.getElementById('fileBg').click());
+  const bgDel=el.querySelector('#pBgDel');
+  if(bgDel) bgDel.addEventListener('click',()=>{
+    if(!confirm('Usunąć podkład tej kondygnacji? Pomieszczenia i instalacja zostaną nietknięte.')) return;
+    snapshot(); const fl=F(); fl.bg=null; fl.bgW=0; fl.bgH=0; fl.maskPrev=null;
+    delete bgCache[fl.id]; refreshAll();
+    toast('Podkład usunięty. Obrysy i instalacja pozostały bez zmian.');
+  });
   el.querySelector('#pCalib').addEventListener('click',e=>{e.preventDefault();setTool('calib');});
   const a=el.querySelector('#pBgA'); if(a) a.addEventListener('input',e=>{f.bgAlpha=+e.target.value;draw();});
   const df=el.querySelector('#pDelFloor'); if(df) df.addEventListener('click',()=>{ if(confirm('Usunąć kondygnację wraz z zawartością?')){snapshot();state.floors.splice(state.activeFloor,1);state.activeFloor=0;refreshAll();} });

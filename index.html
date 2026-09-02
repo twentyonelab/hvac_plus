@@ -52,6 +52,7 @@
   <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"/></symbol>
   <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-rect" viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2"/><path d="M20 16v2a2 2 0 0 1-2 2h-2"/><rect x="4" y="4" width="16" height="16" rx="2" opacity=".35"/></symbol>
   <symbol id="i-wind" viewBox="0 0 24 24"><path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/></symbol>
 </svg>
 
@@ -89,8 +90,9 @@
       </section>
 
       <section class="tgroup" data-group="rooms">
-        <div class="tgroup-h"><span class="t">Pomieszczenia</span><span class="n">2</span><span class="chev"><svg class="i"><use href="#i-chevron"/></svg></span></div>
+        <div class="tgroup-h"><span class="t">Pomieszczenia</span><span class="n">3</span><span class="chev"><svg class="i"><use href="#i-chevron"/></svg></span></div>
         <div class="tgroup-b">
+          <button class="tbtn" data-tool="room_rect"><span class="ic"><svg class="i"><use href="#i-rect"/></svg></span>Prostokąt</button>
           <button class="tbtn" data-tool="room"><span class="ic"><svg class="i"><use href="#i-square"/></svg></span>Obrys pomieszczenia</button>
           <button class="dcard person" data-tool="person" title="Przeciągnij na rzut albo kliknij, aby wstawiać kliknięciem">
             <span class="ic"><svg class="i"><use href="#i-user"/></svg></span>
@@ -175,7 +177,6 @@
       <div class="stage-h">
         <div class="stage-t">
           <span id="stageTitle">Parter</span>
-          <span id="stageSub"><svg class="i"><use href="#i-layers"/></svg><span id="stageSubTxt">—</span></span>
         </div>
         <div id="floorbar"></div>
       </div>

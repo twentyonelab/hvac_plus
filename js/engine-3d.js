@@ -11,6 +11,10 @@ const V3_COL={sup:'#2D62BE',exh:'#D12E4F',fresh:'#248964',out:'#A57327',mix:'#81
 function v3RoomColor(role){
   return role==='exh'?'rgba(209,46,79,':role==='both'?'rgba(129,84,182,':role==='sup'?'rgba(45,98,190,':role==='excluded'?'rgba(142,144,150,':'rgba(142,144,150,';
 }
+/* podłogi w 3D: ten sam kolor rozbielony o połowę (jak tła w rzucie) */
+function v3RoomFill(role){
+  return role==='exh'?'rgba(232,150,167,':role==='both'?'rgba(192,169,218,':role==='sup'?'rgba(150,176,222,':'rgba(198,199,202,';
+}
 function v3CenterOf(f,ppm){
   const xs=[],ys=[];
   f.rooms.forEach(r=>r.pts.forEach(p=>{xs.push(p.x);ys.push(p.y);}));
@@ -178,10 +182,10 @@ function render3D(g,W,H,cam,opts){
     if(v3.showRooms){
       const rooms=f.rooms.map(r=>{ const c=polyCentroid(r.pts), w=v3W(fl,c); return {r,n:v3P(w.X,w.Y,fl.z0,cam).n}; }).sort((a,b)=>a.n-b.n);
       rooms.forEach(({r})=>{
-        const t=ROOM_TYPES[r.type]||{}, col=v3RoomColor(t.role);
+        const t=ROOM_TYPES[r.type]||{}, col=v3RoomColor(t.role), fillCol=v3RoomFill(t.role);
         const flo=r.pts.map(p=>{ const w=v3W(fl,p); return v3P(w.X,w.Y,fl.z0,cam); });
         g.beginPath(); flo.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath();
-        g.fillStyle=col+(f.bg&&v3.showBg?'0.08)':'0.11)'); g.fill();
+        g.fillStyle=fillCol+(f.bg&&v3.showBg?'0.26)':'0.32)'); g.fill();
         if(window.CTRL&&CTRL.connected&&CTRL.roomCO2&&CTRL.roomCO2[r.id]!=null){ const c2=CTRL.roomCO2[r.id]; g.fillStyle=co2Color(c2,Math.min(0.5,Math.max(0,(c2-500)/1400))); g.fill(); }
         g.strokeStyle=col+'0.9)'; g.lineWidth=1.4; g.stroke();
         if(v3.showWalls){
