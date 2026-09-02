@@ -36,7 +36,17 @@ Warstwa wizualna przeniesiona z **21 Apps Smart Home Dashboard**: Outfit, białe
 
 Instalacja ma jedną paletę wspólną dla rzutu 2D, widoku 3D i wydruku: nawiew `#2D62BE`, wywiew `#D12E4F`, czerpnia `#248964`, wyrzutnia `#A57327`, strefy S1 `#6946B9` / S2 `#65762D`, mieszkaniec `#7B5CC1`, centrala i piony w szarościach ink. Zachowana jest konwencja rysunku technicznego (nawiew chłodny, wywiew ciepły), ale odcienie mają hue i nasycenie z systemu 21 Apps (mint, lavender, lime, rose), więc rysunek i interfejs są z jednego świata. Wszystkie mają kontrast ≥ 3,5:1 na tle roboczym i ≥ 4:1 dla białego opisu na symbolu. Zaznaczenie to mint-300 z systemu.
 
-Legenda oznaczeń jest przyciskiem w prawym dolnym rogu obszaru roboczego — działa w 2D i 3D, stan zapamiętywany.
+Legenda oznaczeń jest przyciskiem w prawym dolnym rogu obszaru roboczego — działa w 2D i 3D, po otwarciu aplikacji jest zwinięta.
+
+## Układ obszaru roboczego
+
+Sterowanie rysunkiem siedzi na samym rysunku, podzielone według pytania „co robię" kontra „jak patrzę":
+
+- **Lewa góra — praca z rysunkiem:** przełącznik 2D / 3D, widok i kamera (izometria, z góry, z przodu, z boku, dopasuj, eksport PNG), warstwy (rzutu albo modelu), narzędzia wskazywania (wybierz / edytuj, przesuń), edycja (cofnij, przywróć, usuń).
+- **Prawa góra — jak patrzę:** zoom i dopasowanie, a pod lupą ustawienia widoku 3D (obrót, nachylenie, rozsunięcie kondygnacji).
+- **Dół:** po lewej pasek stanu, po prawej legenda, na środku podpowiedź, która sama gaśnie po kilku sekundach.
+
+Lewa szyna zostaje tym, czym powinna być — katalogiem tego, co wstawiamy w projekt: podkład, pomieszczenia, automatyzacja, urządzenia (karty do przeciągania), przewody. Panel prawy to wyłącznie dane projektu i obliczenia; zakładka „3D" zniknęła, bo ustawienia widoku należą do widoku.
 
 ## Decyzje architektoniczne
 
@@ -44,6 +54,8 @@ Legenda oznaczeń jest przyciskiem w prawym dolnym rogu obszaru roboczego — dz
 - **Vanilla JS, brak bundlera.** Jeden `index.html` + trzy skrypty silnika + `ui.js`. Łatwe hostowanie na Pages, zero zależności poza pdf.js z CDN (tylko do podkładów PDF).
 - **Drag & drop bez frameworka.** Pointer Events plus podgląd rysowany wprost na canvasie (podświetlone pomieszczenie, pierścień celu, symbol elementu). React nic tu nie wnosi — stan przeciągania to jeden obiekt, a rysunek i tak jest imperatywny (canvas), więc warstwa wirtualnego DOM byłaby kosztem bez korzyści.
 - **Jedna ścieżka wstawiania elementu.** `placeNodeAt(type, punkt)` w silniku obsługuje i kliknięcie narzędziem, i upuszczenie karty. Reguły (numer pionu, przypisanie do pomieszczenia, ostrzeżenia) nie mogą się rozjechać między trybami.
+- **Cofnij / przywróć na jednym stosie.** `snapshot()` czyści stos „przywróć", `undo()` i `redo()` przerzucają stany między stosami. Każda zmiana na planie przechodzi przez `snapshot()`, więc historia obejmuje też przeciągnięte karty i automatykę.
+- **Obrót 3D wokół środka bryły.** `v3Orbit()` zmienia kąty i koryguje przesunięcie tak, by środek modelu został w tym samym punkcie ekranu — bryła nie ucieka poza kadr przy obracaniu.
 - **Kolory rysunku to warstwa semantyczna, nie dekoracja.** Zmiana palety = zmiana wartości w jednym miejscu (zmienne CSS + stałe silnika), a nie przy każdym `fillStyle`.
 - **UI podmienia globalne funkcje renderujące** (`renderFloorbar`, `refreshAll`, `setTool`) zamiast edytować silnik. Aktualizacja silnika = podmiana plików `engine-*.js`.
 

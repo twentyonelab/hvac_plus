@@ -49,6 +49,9 @@
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
   <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></symbol>
   <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-wind" viewBox="0 0 24 24"><path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/></symbol>
 </svg>
 
@@ -77,13 +80,6 @@
   <div id="app">
     <!-- ===== szyna narzędzi ===== -->
     <aside id="toolbar">
-      <section class="tgroup" data-group="nav">
-        <div class="tgroup-h"><span class="t">Nawigacja</span><span class="n">2</span><span class="chev"><svg class="i"><use href="#i-chevron"/></svg></span></div>
-        <div class="tgroup-b">
-          <button class="tbtn" data-tool="select"><span class="ic"><svg class="i"><use href="#i-pointer"/></svg></span>Wybierz / edytuj</button>
-          <button class="tbtn" data-tool="pan"><span class="ic"><svg class="i"><use href="#i-hand"/></svg></span>Przesuń widok</button>
-        </div>
-      </section>
 
       <section class="tgroup" data-group="bg">
         <div class="tgroup-h"><span class="t">Podkład</span><span class="n">1</span><span class="chev"><svg class="i"><use href="#i-chevron"/></svg></span></div>
@@ -171,13 +167,6 @@
         </div>
       </section>
 
-      <section class="tgroup" data-group="edit">
-        <div class="tgroup-h"><span class="t">Edycja</span><span class="n">2</span><span class="chev"><svg class="i"><use href="#i-chevron"/></svg></span></div>
-        <div class="tgroup-b">
-          <button class="tbtn danger" id="btnDelete"><span class="ic"><svg class="i"><use href="#i-trash"/></svg></span>Usuń zaznaczone</button>
-          <button class="tbtn" id="btnUndo"><span class="ic"><svg class="i"><use href="#i-undo"/></svg></span>Cofnij (Ctrl+Z)</button>
-        </div>
-      </section>
 
     </aside>
 
@@ -199,10 +188,65 @@
           <button class="btn acc">…albo wybierz plik z dysku</button>
           <p>Po wgraniu: „Rozpoznaj pomieszczenia” odczyta układ i opisy z rzutu.<br>Możesz też rysować bez podkładu — to pole zniknie po dodaniu pierwszego elementu.</p>
         </div></div>
+        <div id="vtoolsL" class="vtools">
+          <div class="vseg" id="modeSwitch" role="tablist" aria-label="Rodzaj widoku">
+            <button type="button" data-mode="2d" class="active" role="tab">2D</button>
+            <button type="button" data-mode="3d" role="tab">3D</button>
+          </div>
+          <div class="vgroup">
+            <button type="button" class="vbtn" id="camBtn" data-pop="camPop" title="Widok i kamera" aria-label="Widok i kamera"><svg class="i"><use href="#i-box"/></svg></button>
+            <button type="button" class="vbtn" id="layBtn" data-pop="layPop" title="Warstwy" aria-label="Warstwy"><svg class="i"><use href="#i-layers"/></svg></button>
+          </div>
+          <div class="vgroup">
+            <button type="button" class="vbtn" data-tool="select" title="Wybierz / edytuj" aria-label="Wybierz / edytuj"><svg class="i"><use href="#i-pointer"/></svg></button>
+            <button type="button" class="vbtn" data-tool="pan" title="Przesuń widok" aria-label="Przesuń widok"><svg class="i"><use href="#i-hand"/></svg></button>
+          </div>
+          <div class="vgroup">
+            <button type="button" class="vbtn" id="btnUndo" title="Cofnij (Ctrl+Z)" aria-label="Cofnij (Ctrl+Z)"><svg class="i"><use href="#i-undo"/></svg></button>
+            <button type="button" class="vbtn" id="btnRedo" title="Przywróć (Ctrl+Shift+Z)" aria-label="Przywróć (Ctrl+Shift+Z)"><svg class="i"><use href="#i-redo"/></svg></button>
+            <button type="button" class="vbtn danger" id="btnDelete" title="Usuń zaznaczone (Delete)" aria-label="Usuń zaznaczone (Delete)"><svg class="i"><use href="#i-trash"/></svg></button>
+          </div>
+
+          <div class="vpop" id="camPop" hidden>
+            <h5>Rodzaj widoku</h5>
+            <div class="vrow"><button class="vp" data-cam="iso">Izometria</button><button class="vp" data-cam="top">Z góry</button></div>
+            <div class="vrow"><button class="vp" data-cam="front">Z przodu</button><button class="vp" data-cam="side">Z boku</button></div>
+            <div class="vrow"><button class="vp" data-cam="fit">Dopasuj do okna</button></div>
+            <h5>Eksport</h5>
+            <div class="vrow"><button class="vp" id="camPng">Pobierz obraz PNG</button></div>
+            <p class="vnote">Widok 3D: przeciągnij, aby obrócić bryłę wokół jej środka · kółko — zoom · Shift lub prawy przycisk — przesuwanie.</p>
+          </div>
+
+          <div class="vpop" id="layPop" hidden>
+            <div data-layers="2d">
+              <h5>Warstwy rzutu</h5>
+              <label class="vchk"><input type="checkbox" id="lay2dBg" checked><span>Podkład (rzut)</span></label>
+              <label class="vchk"><input type="checkbox" id="lay2dLabels" checked><span>Opisy pomieszczeń i przepływy</span></label>
+              <div class="vrow"><button class="vp" id="btnMask">Maska ścian (podgląd)</button></div>
+            </div>
+            <div data-layers="3d" hidden>
+              <h5>Warstwy modelu</h5>
+              <label class="vchk"><input type="checkbox" data-v3="showBg" checked><span>Podkład na stropie</span></label>
+              <label class="vchk"><input type="checkbox" data-v3="showRooms" checked><span>Pomieszczenia</span></label>
+              <label class="vchk"><input type="checkbox" data-v3="showWalls" checked><span>Ściany (szkielet)</span></label>
+              <label class="vchk"><input type="checkbox" data-v3="showLabels" checked><span>Opisy</span></label>
+              <label class="vchk"><input type="checkbox" data-v3="showFlows" checked><span>Przepływy na przewodach</span></label>
+              <label class="vchk"><input type="checkbox" data-v3="showGrid" checked><span>Siatka terenu</span></label>
+            </div>
+          </div>
+        </div>
         <div id="zoombar">
           <button id="zin" title="Powiększ"><svg class="i"><use href="#i-zoom-in"/></svg></button>
           <button id="zout" title="Pomniejsz"><svg class="i"><use href="#i-zoom-out"/></svg></button>
           <button id="zfit" title="Dopasuj do okna"><svg class="i"><use href="#i-fit"/></svg></button>
+          <button id="orbBtn" data-pop="orbPop" title="Obrót, nachylenie, rozsunięcie"><svg class="i"><use href="#i-sliders"/></svg></button>
+        </div>
+        <div class="vpop right" id="orbPop" hidden>
+          <h5>Ustawienia widoku 3D</h5>
+          <label class="vsl"><span>Obrót</span><b id="v3thetaV">0°</b><input type="range" id="v3theta" min="-180" max="180" step="1"></label>
+          <label class="vsl"><span>Nachylenie</span><b id="v3elevV">0°</b><input type="range" id="v3elev" min="5" max="89" step="1"></label>
+          <label class="vsl"><span>Rozsunięcie kondygnacji</span><b id="v3explV">0 m</b><input type="range" id="v3expl" min="0" max="4" step="0.25"></label>
+          <p class="vnote">Bryła obraca się wokół własnego środka. Kondygnacje wyrównywane są po pionach o tym samym numerze.</p>
         </div>
         <div id="hint" style="opacity:0"></div>
         <div id="legend">
@@ -247,7 +291,6 @@
     <button data-pane="bom">Zestawienie</button>
     <button data-pane="zgod">Zgodność</button>
     <button data-pane="ster" title="Wirtualne połączenie ze sterowaniem centrali 21LAB">Sterowanie</button>
-    <button data-pane="v3d" title="Aksonometria instalacji">3D</button>
   </div>
   <div id="panes">
     <div class="pane active" id="pane-proj"></div>
@@ -256,7 +299,6 @@
     <div class="pane" id="pane-dobor"></div>
     <div class="pane" id="pane-bom"></div>
     <div class="pane" id="pane-zgod"></div>
-    <div class="pane" id="pane-v3d"></div>
     <div class="pane" id="pane-ster"></div>
   </div>
   <div id="props"></div>

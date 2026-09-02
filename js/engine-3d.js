@@ -47,6 +47,31 @@ function build3D(){
   const roofZ=floors.length? floors[floors.length-1].zc+0.5 : 3;
   return {floors,roofZ};
 }
+/* środek bryły w świecie — punkt, wokół którego obraca się widok */
+function v3Pivot(model){
+  const m=model||build3D();
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9,z0=1e9,z1=-1e9,any=false;
+  m.floors.forEach(fl=>{
+    const pts=[];
+    fl.f.rooms.forEach(r=>r.pts.forEach(p=>pts.push(p)));
+    fl.f.nodes.forEach(n=>pts.push(n));
+    if(!pts.length&&fl.f.bg&&fl.f.bgW) pts.push({x:0,y:0},{x:fl.f.bgW,y:fl.f.bgH});
+    pts.forEach(p=>{ const w=v3W(fl,p); any=true;
+      x0=Math.min(x0,w.X); x1=Math.max(x1,w.X); y0=Math.min(y0,w.Y); y1=Math.max(y1,w.Y); });
+    z0=Math.min(z0,fl.z0); z1=Math.max(z1,fl.zc);
+  });
+  if(!any) return {X:0,Y:0,Z:(m.roofZ||3)/2};
+  return {X:(x0+x1)/2, Y:(y0+y1)/2, Z:(z0+z1)/2};
+}
+/* zmiana kątów z zachowaniem punktu obrotu w tym samym miejscu na ekranie */
+function v3Orbit(theta,elev,pivot,anchor){
+  const p=pivot||v3Pivot();
+  const a=anchor||v3P(p.X,p.Y,p.Z);
+  v3.theta=theta; v3.elev=elev;
+  const q=v3P(p.X,p.Y,p.Z);
+  v3.ox+=a.x-q.x; v3.oy+=a.y-q.y;
+}
+
 /* rzut aksonometryczny: świat [m] -> ekran [px CSS]; n = „bliskość” do sortowania malarskiego */
 function v3P(X,Y,Z,cam){
   const c=cam||v3;
@@ -324,7 +349,7 @@ function setMode3D(on){
   mode3D=on; window.__mode3D=on; draft=null; mouse.panStart=null; mouse.dragNode=null; v3.drag=null; v3.hover=null;
   cv.style.cursor= on?'grab':(tool==='pan'?'grab':tool==='select'?'default':'crosshair');
   document.getElementById('dropzone').classList.toggle('show', !on && (()=>{const f=F();return !f.bg&&!f.rooms.length&&!f.nodes.length;})());
-  if(on){ setHint('Widok 3D: przeciągaj, aby obracać · kółko — zoom · prawy przycisk / Shift — przesuwanie · „Fit” — dopasuj. Kliknij inną zakładkę lub przycisk „2D”, aby wrócić do edycji.'); v3.fitted=false; }
+  if(on){ setHint('Widok 3D: przeciągaj, aby obracać · kółko — zoom · prawy przycisk / Shift — przesuwanie · „Dopasuj” — wyśrodkuj. Przycisk „2D” w lewym górnym rogu wraca do edycji rzutu.'); v3.fitted=false; }
   else setHint(TOOL_HINTS[tool]||'');
   renderFloorbar(); draw();
 }
@@ -384,12 +409,17 @@ cv.addEventListener('wheel',e=>{ if(!mode3D) return; e.preventDefault(); e.stopI
 },{passive:false,capture:true});
 cv.addEventListener('mousedown',e=>{ if(!mode3D) return; e.stopImmediatePropagation();
   const pan=e.button!==0||e.shiftKey||tool==='pan'||spaceDown;
-  v3.drag={mx:e.offsetX,my:e.offsetY,theta:v3.theta,elev:v3.elev,ox:v3.ox,oy:v3.oy,pan}; cv.style.cursor=pan?'grabbing':'move';
+  const pv=v3Pivot(), an=v3P(pv.X,pv.Y,pv.Z);
+  v3.drag={mx:e.offsetX,my:e.offsetY,theta:v3.theta,elev:v3.elev,ox:v3.ox,oy:v3.oy,pan,pivot:pv,anchor:an}; cv.style.cursor=pan?'grabbing':'move';
 },true);
 cv.addEventListener('mousemove',e=>{ if(!mode3D) return; e.stopImmediatePropagation();
   if(v3.drag){ const dx=e.offsetX-v3.drag.mx, dy=e.offsetY-v3.drag.my;
     if(v3.drag.pan){ v3.ox=v3.drag.ox+dx; v3.oy=v3.drag.oy+dy; }
-    else { v3.theta=v3.drag.theta-dx*0.005;   /* przednia ściana podąża za kursorem */ v3.elev=Math.min(89*Math.PI/180,Math.max(5*Math.PI/180,v3.drag.elev+dy*0.004)); }
+    else { /* przednia ściana podąża za kursorem, obrót wokół środka bryły */
+      v3.ox=v3.drag.ox; v3.oy=v3.drag.oy;
+      v3Orbit(v3.drag.theta-dx*0.005,
+              Math.min(89*Math.PI/180,Math.max(5*Math.PI/180,v3.drag.elev+dy*0.004)),
+              v3.drag.pivot, v3.drag.anchor); }
     draw(); return; }
   // hover po węzłach
   let best=null,bd=14; v3.hits.forEach(h=>{ const d=Math.hypot(h.x-e.offsetX,h.y-e.offsetY); if(d<bd){bd=d;best=h;} });
