@@ -41,7 +41,7 @@
 
   function drawPreview(p){
     const d = NODE_DEFS[p.type]; if(!d) return;
-    const col = d.c || d.color || '#12314e';
+    const col = d.c || d.color || '#2F3033';
     const r = d.r/view.z*Math.min(view.z,1.6);
     worldCtx();
 

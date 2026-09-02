@@ -20,7 +20,7 @@
   const saveGroups=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(groups)); }catch(e){} };
   document.querySelectorAll('.tgroup').forEach(g=>{
     const id=g.dataset.group;
-    const COLLAPSED_BY_DEFAULT=['auto','edit','legend'];
+    const COLLAPSED_BY_DEFAULT=['auto','edit'];
     if(groups[id]===true) g.classList.add('collapsed');
     else if(groups[id]===undefined && COLLAPSED_BY_DEFAULT.includes(id)) g.classList.add('collapsed');
     $('.tgroup-h',g).addEventListener('click',()=>{
@@ -86,6 +86,16 @@
 
   /* nazwa projektu → podtytuł sceny na żywo */
   $('#projName').addEventListener('input',e=>{ state.name=e.target.value; updateStage(); });
+
+  /* ---------- legenda (przycisk w prawym dolnym rogu sceny) ---------- */
+  const lgBtn=$('#legendBtn'), lgPop=$('#legendPop'), LGK='hvacplus.ui.legend';
+  const lgSet=open=>{ lgPop.hidden=!open; lgBtn.setAttribute('aria-expanded',String(open));
+    try{ localStorage.setItem(LGK,open?'1':'0'); }catch(e){} };
+  let lgOpen=false; try{ lgOpen=localStorage.getItem(LGK)==='1'; }catch(e){}
+  lgSet(lgOpen);
+  lgBtn.addEventListener('click',e=>{ e.stopPropagation(); lgSet(lgPop.hidden); });
+  document.addEventListener('click',e=>{ if(!lgPop.hidden && !$('#legend').contains(e.target)) lgSet(false); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!lgPop.hidden) lgSet(false); });
 
   /* ---------- fonty: przerysuj canvas po załadowaniu Outfit ---------- */
   if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ try{ draw(); }catch(e){} });

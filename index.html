@@ -48,6 +48,7 @@
   <symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
   <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></symbol>
   <symbol id="i-wind" viewBox="0 0 24 24"><path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/></symbol>
 </svg>
 
@@ -104,7 +105,7 @@
       </section>
 
       <section class="tgroup" data-group="auto">
-        <div class="tgroup-h"><span class="t">Automatyka</span><span class="n">6</span><span class="chev"><svg class="i"><use href="#i-chevron"/></svg></span></div>
+        <div class="tgroup-h"><span class="t">Automatyzacja</span><span class="n">6</span><span class="chev"><svg class="i"><use href="#i-chevron"/></svg></span></div>
         <div class="tgroup-b">
           <button class="tbtn auto" id="btnAutoRooms"><span class="ic"><svg class="i"><use href="#i-sparkles"/></svg></span>Rozpoznaj pomieszczenia</button>
           <button class="tbtn auto" data-tool="wand"><span class="ic"><svg class="i"><use href="#i-wand"/></svg></span>Klik: pomieszczenie</button>
@@ -178,17 +179,6 @@
         </div>
       </section>
 
-      <section class="tgroup" data-group="legend">
-        <div class="tgroup-h"><span class="t">Legenda</span><span class="chev"><svg class="i"><use href="#i-chevron"/></svg></span></div>
-        <div class="tgroup-b legend">
-          <i style="background:var(--sup)"></i>nawiew<br>
-          <i style="background:var(--exh)"></i>wywiew<br>
-          <i style="background:var(--fresh)"></i>czerpnia<br>
-          <i style="background:var(--out)"></i>wyrzutnia<br>
-          <i style="background:#5b3fa8"></i>S1 · strefa nocna<br>
-          <i style="background:#b8860b"></i>S2 · strefa dzienna
-        </div>
-      </section>
     </aside>
 
     <!-- ===== scena ===== -->
@@ -215,6 +205,23 @@
           <button id="zfit" title="Dopasuj do okna"><svg class="i"><use href="#i-fit"/></svg></button>
         </div>
         <div id="hint" style="opacity:0"></div>
+        <div id="legend">
+          <div id="legendPop" hidden>
+          <span class="lg"><i class="c-sup"></i>nawiew</span>
+          <span class="lg"><i class="c-exh"></i>wywiew</span>
+          <span class="lg"><i class="c-fresh"></i>czerpnia</span>
+          <span class="lg"><i class="c-out"></i>wyrzutnia</span>
+          <span class="lg"><i class="c-ahu"></i>centrala</span>
+          <span class="lg"><i class="c-riser"></i>pion</span>
+          <span class="lg"><i class="c-person"></i>mieszkaniec</span>
+          <span class="lg"><i class="c-sel"></i>zaznaczenie</span>
+          <span class="lg"><i class="c-z1"></i>S1 · strefa nocna</span>
+          <span class="lg"><i class="c-z2"></i>S2 · strefa dzienna</span>
+          <span class="lg"><i class="solid"></i>kanał spiro</span>
+          <span class="lg"><i class="dash"></i>przewód FLX</span>
+          </div>
+          <button id="legendBtn" type="button" aria-expanded="false" title="Legenda oznaczeń (2D i 3D)"><svg class="i"><use href="#i-list"/></svg><span>Legenda</span></button>
+        </div>
         <div id="statusbar"><span id="stCoords">—</span><span id="stScale">skala: nieskalibrowana</span><span id="stSel"></span></div>
       </div>
     </main>

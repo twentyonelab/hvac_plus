@@ -196,7 +196,7 @@ function renderSter(el){
   <h4>Zestawienie</h4>
   <div class="field"><label>Dodaj do BOM: GATE + Modbus + czujniki + panel</label><input type="checkbox" id="ctBom" ${CTRL.bomOn?'checked':''}></div>
   <h4>Log komunikacji</h4>
-  <div id="ctLog" style="font:10.5px/1.4 Consolas,monospace;background:#0f1b27;color:#bfe0ff;border-radius:8px;padding:8px;max-height:150px;overflow:auto;white-space:pre-wrap">${CTRL.log.map(esc).join('<br>')}</div>
+  <div id="ctLog" style="font:10.5px/1.4 Consolas,monospace;background:#1C1C1E;color:#A9EBC9;border-radius:8px;padding:8px;max-height:150px;overflow:auto;white-space:pre-wrap">${CTRL.log.map(esc).join('<br>')}</div>
   <details class="src" style="margin-top:8px"><summary>Źródła (dokumentacja producenta central)</summary>Instrukcja „Moduł komunikacji Modbus HRQ-Modbus” (alnor.com.pl, rejestry 41000–49062); artykuł „Sterowanie rekuperacją” (HRQ-PremAIR-BUT-LM11/LM04, SENS-CO2/RH, GATE); instrukcja HRU-MinistAIR. Model termiczny i czujników — symulacja własna.</details>`;
   const lk=el.querySelector('#ctLink'); if(lk) lk.addEventListener('change',e=>{ CTRL.link=e.target.value; renderSter(el); });
   const hs=el.querySelector('#ctHost'); if(hs) hs.addEventListener('change',e=>{ const [h,p]=e.target.value.split(':'); CTRL.host=h||CTRL.host; CTRL.port=+p||502; });
@@ -210,7 +210,7 @@ function renderSterLive(){
   const C=window.CALC||{}, B=C.balance||{}, k=ctrlFactor(), m=CTRL_MODES[CTRL.mode];
   const day=CTRL.zoneMode==='auto'?ctrlIsDay():CTRL.zoneMode==='day';
   const zOn=zoningOn()&&C.zoning&&C.zoning.z[1].rooms&&C.zoning.z[2].rooms;
-  const bar=(k,col)=>`<div style="flex:1;background:#eef2f6;border-radius:6px;height:14px;position:relative;overflow:hidden"><div style="width:${CTRL.damper[k]}%;height:100%;background:${col};opacity:.8"></div><span style="position:absolute;left:6px;top:0;font-size:10px;line-height:14px;color:#123">${ZONES[k].short} · ${Math.round(CTRL.damper[k])}% otw.</span></div>`;
+  const bar=(k,col)=>`<div style="flex:1;background:#F3F4F6;border-radius:6px;height:14px;position:relative;overflow:hidden"><div style="width:${CTRL.damper[k]}%;height:100%;background:${col};opacity:.8"></div><span style="position:absolute;left:6px;top:0;font-size:10px;line-height:14px;color:#123">${ZONES[k].short} · ${Math.round(CTRL.damper[k])}% otw.</span></div>`;
   return `
   <h4>Panel użytkownika (jak w aplikacji)</h4>
   <div style="display:flex;gap:4px;flex-wrap:wrap;margin:4px 0">${Object.entries(CTRL_MODES).map(([id,mm])=>`<button class="btn ${CTRL.mode===id?'acc':''}" data-mode="${id}" title="${mm.desc}">${mm.label}</button>`).join('')}</div>
@@ -263,7 +263,7 @@ function drawLiveBadge(){
   const txt=`● LIVE · ${m.label} · ${fmt(CTRL.live.q)} m³/h · ${ctrlClockStr()} ${zoningOn()?(day?'☀ dzień':'☾ noc'):''} · CO₂ ${Math.round(CTRL.co2)} ppm`;
   ctx.save(); ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
   ctx.font='600 12px Outfit, Segoe UI'; const tw=ctx.measureText(txt).width;
-  ctx.fillStyle='rgba(13,122,63,.92)'; ctx.beginPath(); ctx.roundRect(10,H-60,tw+18,24,12); ctx.fill();
+  ctx.fillStyle='rgba(34,129,94,.92)'; ctx.beginPath(); ctx.roundRect(10,H-60,tw+18,24,12); ctx.fill();
   ctx.fillStyle='#fff'; ctx.textAlign='left'; ctx.fillText(txt,19,H-43); ctx.restore();
 }
 /* BOM: elementy sterowania */
