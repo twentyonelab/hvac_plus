@@ -54,8 +54,8 @@
   };
 
   function updateStage(){
-    const f=F(); if(!f) return;
-    $('#stageTitle').textContent = window.__mode3D ? 'Widok 3D' : (f.name||'Kondygnacja');
+    const el=$('#projName');
+    if(el && document.activeElement!==el) el.value = state.name||'';
   }
 
   /* ---------- KPI w panelu prawym ---------- */
@@ -71,6 +71,50 @@
 
   /* nazwa projektu → podtytuł sceny na żywo */
   $('#projName').addEventListener('input',e=>{ state.name=e.target.value; });
+
+  /* ---------- panel projektu: pełny ekran ---------- */
+  const side=$('#side');
+  function sideFull(on){
+    side.classList.toggle('fs',on);
+    $('#sideFs').hidden=on; $('#sideMin').hidden=!on; $('#sideClose').hidden=!on;
+    document.body.classList.toggle('side-fs',on);
+  }
+  $('#sideFs').addEventListener('click',()=>sideFull(true));
+  $('#sideMin').addEventListener('click',()=>sideFull(false));
+  $('#sideClose').addEventListener('click',()=>sideFull(false));
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&side.classList.contains('fs')) sideFull(false);
+    if(e.key.toLowerCase()==='f'&&!/input|textarea|select/i.test((e.target.tagName||''))&&!e.ctrlKey&&!e.metaKey)
+      sideFull(!side.classList.contains('fs'));
+  });
+
+  /* ---------- kafelek pogody na rysunku ---------- */
+  function syncWeatherCard(){
+    const W=window.HvacWeather, card=$('#wxCard');
+    if(!card) return;
+    const r=W&&W.last;
+    const simOpen=window.HvacSim && HvacSim.state && HvacSim.state.open;
+    if(!r||simOpen){ card.hidden=true; return; }
+    const v=(x,u,d=0)=> x==null? '—' : `${fmt(x,d)} ${u}`;
+    card.hidden=false;
+    $('#wxTemp').textContent = r.tempC==null? '—' : `${fmt(r.tempC,1)} °C`;
+    $('#wxDesc').textContent = `zewnętrznie · ${r.text||'—'}`;
+    $('#wxHum').textContent  = v(r.humidity,'%');
+    $('#wxWind').textContent = v(r.windKmh,'km/h',0);
+    $('#wxRad').textContent  = v(r.radiationWm2,'W/m²');
+    $('#wxPlace').textContent= r.place||'—';
+    card.title = `Odczyt ${r.ts}${W.ageMinutes()!=null?` (${W.ageMinutes()} min temu)`:''} · Open-Meteo`;
+  }
+  $('#wxCard').addEventListener('click',()=>$('#wxCard').classList.toggle('min'));
+  window.syncWeatherCard=syncWeatherCard;
+  syncWeatherCard();
+  setInterval(()=>{                     // odświeżenie kafelka; moduł sam pilnuje limitów zapytań
+    const place=(state.weatherPlace||'').trim();
+    if(place && window.HvacWeather) HvacWeather.read({place}).then(syncWeatherCard);
+    else syncWeatherCard();
+  }, 60000);
+  if((state.weatherPlace||'').trim() && window.HvacWeather)
+    HvacWeather.read({place:state.weatherPlace}).then(syncWeatherCard);
 
   /* ---------- legenda (przycisk w prawym dolnym rogu sceny) ---------- */
   const lgBtn=$('#legendBtn'), lgPop=$('#legendPop');

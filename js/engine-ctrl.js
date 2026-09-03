@@ -254,6 +254,7 @@ function weatherFetch(force){
   if(box&&force) box.innerHTML='<p class="note">Pobieranie…</p>';
   W.read({place, force:!!force}).then(()=>{
     const b=document.getElementById('wtBox'); if(b) b.innerHTML=renderWeatherBox();
+    if(window.syncWeatherCard) syncWeatherCard();
   });
 }
 

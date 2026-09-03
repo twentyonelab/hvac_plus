@@ -54,6 +54,16 @@
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-rect" viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2"/><path d="M20 16v2a2 2 0 0 1-2 2h-2"/><rect x="4" y="4" width="16" height="16" rx="2" opacity=".35"/></symbol>
   <symbol id="i-eye2" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-maximize" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+  <symbol id="i-minimize" viewBox="0 0 24 24"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></symbol>
+  <symbol id="i-x2" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-play2" viewBox="0 0 24 24"><path d="M6 4 20 12 6 20Z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+  <symbol id="i-cloud-sun" viewBox="0 0 24 24"><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6"/></symbol>
+  <symbol id="i-droplet" viewBox="0 0 24 24"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></symbol>
+  <symbol id="i-sun2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+  <symbol id="i-arrow-ur" viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></symbol>
   <symbol id="i-wind" viewBox="0 0 24 24"><path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/></symbol>
 </svg>
 
@@ -64,11 +74,6 @@
       <img class="brand-logo" src="assets/logo-21zmyslow.svg" alt="21 zmysłów">
       <span class="brand-sub"><b>HVAC+</b>&nbsp;planer<sup>™</sup></span>
     </div>
-    <label class="projfield" title="Nazwa projektu / adres inwestycji">
-      <svg class="i"><use href="#i-pin"/></svg>
-      <input id="projName" placeholder="Nazwa projektu / adres inwestycji">
-      <span class="kbd">projekt</span>
-    </label>
     <div class="spacer"></div>
     <div class="actions">
       <button class="pbtn sec" id="btnNew" title="Nowy projekt"><svg class="i"><use href="#i-file-plus"/></svg><span class="lbl">Nowy</span></button>
@@ -177,7 +182,7 @@
     <main id="stage">
       <div class="stage-h">
         <div class="stage-t">
-          <span id="stageTitle">Parter</span>
+          <input id="projName" class="stage-name" placeholder="Nazwa projektu / adres inwestycji" title="Nazwa projektu — kliknij, aby zmienić">
         </div>
         <div id="floorbar"></div>
       </div>
@@ -248,6 +253,9 @@
             </div>
           </div>
         </div>
+        <button type="button" id="simBtn" title="Symulacja doby: pogoda, pora dnia, obłożenie">
+          <svg class="i"><use href="#i-timer"/></svg><span>Symulacja</span>
+        </button>
         <div id="zoombar">
           <button id="zin" title="Powiększ"><svg class="i"><use href="#i-zoom-in"/></svg></button>
           <button id="zout" title="Pomniejsz"><svg class="i"><use href="#i-zoom-out"/></svg></button>
@@ -262,6 +270,31 @@
           <p class="vnote">Bryła obraca się wokół własnego środka. Kondygnacje wyrównywane są po pionach o tym samym numerze.</p>
         </div>
         <div id="hint" style="opacity:0"></div>
+        <div id="simSheet" hidden>
+          <div class="sim-head">
+            <button type="button" class="sim-play" id="simPlay" title="Odtwórz / zatrzymaj"><svg class="i"><use href="#i-play2"/></svg></button>
+            <b id="simClock">00:00</b>
+            <span class="sim-phase" id="simPhase">—</span>
+            <input type="range" id="simTime" min="0" max="1439" step="5" value="480">
+            <select id="simSpeed" title="Tempo symulacji">
+              <option value="60">×60</option>
+              <option value="180" selected>×180</option>
+              <option value="600">×600</option>
+            </select>
+            <button type="button" class="sim-x" id="simClose" title="Zamknij symulację"><svg class="i"><use href="#i-x2"/></svg></button>
+          </div>
+          <div class="sim-body">
+            <canvas id="simChart"></canvas>
+            <div class="sim-kpis">
+              <div class="sim-k"><b id="simTsup">—</b><span>temp. nawiewu</span></div>
+              <div class="sim-k"><b id="simTout">—</b><span>zewnętrzna</span></div>
+              <div class="sim-k"><b id="simPow">—</b><span>moc grzania</span></div>
+              <div class="sim-k mint"><b id="simSave">—</b><span>oszczędza odzysk</span></div>
+              <div class="sim-k"><b id="simDay">—</b><span>doba: zużycie / zysk</span></div>
+              <div class="sim-k"><b id="simOcc">—</b><span>obłożenie i tryb</span></div>
+            </div>
+          </div>
+        </div>
         <div id="legend">
           <div id="legendPop" hidden>
           <span class="lg"><i class="c-sup"></i>nawiew</span>
@@ -279,6 +312,18 @@
           </div>
           <button id="legendBtn" type="button" aria-expanded="false" title="Legenda oznaczeń (2D i 3D)"><svg class="i"><use href="#i-list"/></svg><span>Legenda</span></button>
         </div>
+        <div id="wxCard" hidden>
+          <div class="wx-top">
+            <svg class="i wx-ic"><use href="#i-cloud-sun"/></svg>
+            <div class="wx-t"><b id="wxTemp">—</b><span id="wxDesc">—</span></div>
+          </div>
+          <div class="wx-rows">
+            <div><span>wilgotność</span><b id="wxHum">—</b></div>
+            <div><span>wiatr</span><b id="wxWind">—</b></div>
+            <div><span>nasłonecznienie</span><b id="wxRad">—</b></div>
+          </div>
+          <div class="wx-foot"><span id="wxPlace">—</span> · Open-Meteo <svg class="i"><use href="#i-arrow-ur"/></svg></div>
+        </div>
         <div id="statusbar"><span id="stCoords">—</span><span id="stScale">skala: nieskalibrowana</span><span id="stSel"></span></div>
       </div>
     </main>
@@ -289,14 +334,19 @@
 <aside id="side">
   <div class="side-h">
     <div class="side-title">Projekt<br><b>wentylacji</b></div>
-    <svg class="i" style="width:22px;height:22px;color:var(--text-tertiary)"><use href="#i-wind"/></svg>
+    <div class="side-acts">
+      <button type="button" class="sbtn" id="sideFs" title="Pełny ekran (F)" aria-label="Pełny ekran"><svg class="i"><use href="#i-maximize"/></svg></button>
+      <button type="button" class="sbtn" id="sideMin" title="Zmniejsz do panelu (Esc)" aria-label="Zmniejsz" hidden><svg class="i"><use href="#i-minimize"/></svg></button>
+      <button type="button" class="sbtn" id="sideClose" title="Zamknij pełny ekran (Esc)" aria-label="Zamknij" hidden><svg class="i"><use href="#i-x2"/></svg></button>
+    </div>
   </div>
   <div class="kpis" id="kpis">
     <div class="kpi-t mint"><b id="kpiV">—</b><span>strumień projektowy</span></div>
     <div class="kpi-t lav"><b id="kpiP">—</b><span>spręż wymagany</span></div>
     <div class="kpi-t lime"><b id="kpiU">—</b><span>centrala 21LAB</span></div>
   </div>
-  <div id="tabs">
+  <div class="side-sep"></div>
+  <div id="tabs" role="tablist">
     <button data-pane="proj" class="active">Projekt</button>
     <button data-pane="bilans">Bilans</button>
     <button data-pane="siec">Sieć</button>
@@ -327,5 +377,6 @@
 <script src="js/ui.js"></script>
 <script src="js/weather.js"></script>
 <script src="js/dnd.js"></script>
+<script src="js/sim.js"></script>
 </body>
 </html>

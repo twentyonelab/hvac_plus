@@ -11,7 +11,8 @@ Aplikacja webowa 21 zmysłów do projektowania wentylacji mechanicznej z odzyski
 3. Urządzenia i sieć: centrala, rozdzielacze, anemostaty, czerpnia, wyrzutnia, piony, kanały spiro i przewody FLX. Urządzenia wstawia się **przeciągnięciem karty** z szyny narzędzi na rzut albo kliknięciem karty i kliknięciem na rzucie.
 4. Obliczenia: bilans powietrza (PN-83/B-03430, WT §147–155), strefy dzień/noc, wymiarowanie przewodów, spręż, dobór centrali HRU, zestawienie materiałów, lista kontrolna zgodności.
 5. Widok 3D (aksonometria), symulator sterowania (Modbus / GATE) z pogodą z Open-Meteo jako warunkami zewnętrznymi, raport do wydruku z arkuszami rysunkowymi.
-6. Styl wyświetlania („oczko”): wyróżnienie jednej warstwy — tylko kanały, tylko urządzenia, tylko pomieszczenia, tylko CO₂ — reszta rysunku szara i przy 20% krycia. Działa identycznie w 2D i 3D.
+6. Symulacja doby: oś czasu 24 h, pogoda z Open-Meteo jako poziom temperatury zewnętrznej, profil obłożenia, moc grzania powietrza, temperatura nawiewu i oszczędność z odzysku; rysunek ciemnieje na noc.
+7. Styl wyświetlania („oczko”): wyróżnienie jednej warstwy — tylko kanały, tylko urządzenia, tylko pomieszczenia, tylko CO₂ — reszta rysunku szara i przy 20% krycia. Działa identycznie w 2D i 3D.
 
 ## Struktura
 
@@ -24,6 +25,7 @@ js/engine-ctrl.js     wirtualne sterowanie centralą (cyfrowy bliźniak)
 js/ui.js              nakładka UI: zwijane grupy narzędzi, pigułki kondygnacji, KPI, tytuł sceny
 js/dnd.js             przeciąganie kart urządzeń na rzut (Pointer Events, podgląd na canvasie)
 js/weather.js         dane pogodowe z Open-Meteo (kontrakt WeatherReading, cache, backoff)
+js/sim.js             symulacja doby: pogoda, pora dnia, obłożenie, energia i odzysk
 assets/fonts          Outfit (variable, latin + latin-ext)
 assets/icons          ikony Lucide z systemu 21 Apps
 assets/logo-21zmyslow.svg, assets/sygnet-21zmyslow.svg   logo firmowe
@@ -66,6 +68,8 @@ Moduł `js/weather.js` pobiera bieżące warunki z Open-Meteo (bez klucza i reje
 - **Obrót 3D wokół środka bryły.** `v3Orbit()` zmienia kąty i koryguje przesunięcie tak, by środek modelu został w tym samym punkcie ekranu — bryła nie ucieka poza kadr przy obracaniu.
 - **Zmiana rozmiaru podkładu wypala się w obrazie.** Suwak daje podgląd (`bgPrevK` tylko przy rysowaniu), a „Zastosuj" przerysowuje podkład do nowego rozmiaru i zapisuje jako obraz. Dzięki temu rozpoznawanie pomieszczeń, maska ścian i widok 3D pracują na realnych pikselach i nie wymagają własnej transformacji. Skala rysunku (px/m) nie zmienia się — obrysy i instalacja zostają na miejscu, żeby dało się dopasować podkład do nich.
 - **Nakładki na rysunku nie przechwytują kliknięć.** Kontenery mają `pointer-events:none`, tylko same kontrolki je łapią; `fitView()` zostawia marginesy pod nakładki, żeby rysunek nie chował się pod przyciskami.
+- **Panel projektu przypięty do prawej krawędzi.** `#side` jest `position:fixed`, a `#main` ma margines równy jego szerokości. Dzięki temu pełny ekran to animacja jednej wartości (`width: 392px → 100vw`), a nie przeliczanie układu — panel płynnie wyjeżdża w lewo i przykrywa rysunek. W pełnym ekranie treść panelu układa się w kolumny (`column-width: 360px`).
+- **Model symulacji jest jawny i prosty.** Moc grzania powietrza to `V·ρ·cp·ΔT` przed odzyskiem i `·(1−η)` po nim, temperatura nawiewu `t_zewn + η(t_wewn − t_zewn)`, poniżej −3 °C sprawność spada o 18% (odszranianie), wentylatory liczone ryczałtem 0,35 W na m³/h. Profil doby: noc 60% nominału, dom pusty 45%, gotowanie 120%. To ma pokazywać zależności, nie zastępować obliczeń projektowych — i tak jest opisane w interfejsie.
 - **Wyróżnianie warstw jako stan rysowania, nie druga scena.** `focusStart(ctx, grupa)` / `focusEnd(ctx)` owijają pętle rysujące (pomieszczenia, przewody, urządzenia) w 2D i 3D; przygaszenie to `globalAlpha 0.2` plus `filter: grayscale(1)`. Jedna definicja `FOCUS_KEEP` rządzi obydwoma widokami, więc nie mogą się rozjechać.
 - **Kolory rysunku to warstwa semantyczna, nie dekoracja.** Zmiana palety = zmiana wartości w jednym miejscu (zmienne CSS + stałe silnika), a nie przy każdym `fillStyle`.
 - **UI podmienia globalne funkcje renderujące** (`renderFloorbar`, `refreshAll`, `setTool`) zamiast edytować silnik. Aktualizacja silnika = podmiana plików `engine-*.js`.
