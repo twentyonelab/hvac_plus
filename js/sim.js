@@ -248,7 +248,7 @@
     ctx.save();
     ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
     ctx.globalCompositeOperation='multiply';
-    ctx.fillStyle=`rgba(96,110,165,${a})`;              // kolory gasną i chłodnieją
+    ctx.fillStyle=`rgba(122,126,140,${a})`;             // noc gasi rysunek, ale nie barwi go na niebiesko
     ctx.fillRect(0,0,w,h);
     ctx.globalCompositeOperation='source-over';
     ctx.fillStyle=`rgba(12,16,34,${a*0.34})`;           // ogólne przyciemnienie
@@ -256,13 +256,29 @@
     ctx.restore();
   };
 
-  /* szarość rysunku w symulacji — z wyjątkiem stylu „tylko CO₂”, gdzie barwy
-     stężenia są całą treścią obrazu */
+  /* szarość rysunku w symulacji. Rysujemy ją w canvasie (a nie filtrem CSS na
+     całym płótnie), bo mgła CO₂ i mieszkańcy mają zostać widoczni w kolorze
+     i na biało — filtr CSS zabrałby im wszystko. */
   function syncGray(){
-    const co2View = (typeof focusMode!=='undefined') && focusMode==='co2';
-    cv.classList.toggle('sim-gray', S.open && !co2View);
+    window.__simGray = S.open;
+    cv.classList.remove('sim-gray');
+    syncFog();
   }
   window.__simSyncGray = syncGray;
+
+  /* powolny dryf mgły CO₂, gdy symulacja stoi albo gdy patrzymy na styl „tylko CO₂”
+     poza symulacją — przy odtwarzaniu rysunek i tak odświeża pętla */
+  let fogTimer=0;
+  function syncFog(){
+    const co2View = (typeof focusMode!=='undefined') && focusMode==='co2';
+    const want = (S.open || co2View) && !window.__mode3D;
+    if(want && !fogTimer) fogTimer=setInterval(()=>{
+      if(document.hidden || S.playing || window.__mode3D) return;
+      if(window.hasCO2 && hasCO2()) draw();
+    },160);
+    if(!want && fogTimer){ clearInterval(fogTimer); fogTimer=0; }
+  }
+  window.__simSyncFog = syncFog;
 
   /* wysokość arkusza → zmienna CSS, żeby kafelek pogody i legenda ustawiły się nad nim */
   function measureSheet(){

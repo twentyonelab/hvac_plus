@@ -93,9 +93,10 @@
     const W=window.HvacWeather, card=$('#wxCard');
     if(!card) return;
     let r=W&&W.last, simW=null;
-    /* w symulacji doby bez prawdziwego odczytu kafelek pokazuje dane
-       demonstracyjne z przebiegu symulacji — wyraźnie podpisane */
-    if(!r && window.__simWeather) simW=window.__simWeather();
+    /* przy otwartej symulacji kafelek pokazuje pogodę z jej przebiegu — zmienia
+       się razem z godziną. Prawdziwy odczyt (jeśli jest) nadaje poziom
+       temperatury i nazwę miejsca; źródło zawsze podpisane jako symulacja. */
+    if(window.__simWeather) simW=window.__simWeather();
     if(simW) r=simW;
     const v=(x,u,d=0)=> x==null? '—' : `${fmt(x,d)} ${u}`;
     card.hidden=false;
@@ -107,6 +108,7 @@
       $('#wxDesc').textContent=(state.weatherPlace||'').trim()
         ? (W&&W.lastError? 'próba nieudana — ponowi się' : 'pobieranie…')
         : 'kliknij, aby podać lokalizację';
+      const s0=$('#wxSrc'); if(s0) s0.textContent='Open-Meteo';
       card.title='Pogoda z Open-Meteo — kliknij, aby ustawić lokalizację w zakładce Sterowanie';
       return;
     }

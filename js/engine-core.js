@@ -238,6 +238,7 @@ function roomCO2(id){
   if(window.__simCO2&&window.__simCO2[id]!=null) return window.__simCO2[id];
   return null;
 }
+window.hasCO2=hasCO2;
 function hasCO2(){
   if(window.CTRL&&CTRL.connected&&CTRL.roomCO2&&Object.keys(CTRL.roomCO2).length) return true;
   return !!(window.__simCO2&&Object.keys(window.__simCO2).length);
@@ -252,11 +253,27 @@ function focusDim(group){
 /* g — kontekst 2D (rysunek albo eksport); zwraca true, gdy grupa jest przygaszona */
 function focusStart(g,group){
   g.save();
-  if(focusDim(group)){ g.globalAlpha=0.2; if('filter' in g) g.filter='grayscale(1)'; return true; }
+  /* przygaszenie: 20% krycia. Odbarwienie filtrem kontekstu tylko w rzucie 2D —
+     w 3D pojedynczych operacji rysunkowych są tysiące i filtr kosztuje sekundy
+     na klatkę, a przy 20% krycia i tak prawie nie widać koloru. */
+  if(focusDim(group)){ g.globalAlpha=0.2; if(!window.__mode3D && 'filter' in g) g.filter='grayscale(1)'; return true; }
   return false;
 }
+/* Szarość symulacji: jedno przejście trybem mieszania „saturation" na gotowym
+   rysunku. Filtr na kontekście (grayscale) kosztował w 3D sekundy — tu jest to
+   jedna operacja kompozycji. Co narysujemy PO tym przejściu, zostaje kolorowe
+   (mgła CO₂); biel mieszkańców jest bezbarwna, więc przechodzi bez zmian. */
+function simGrayPass(g,w,h){
+  if(!window.__simGray) return;
+  g.save();
+  g.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  g.globalCompositeOperation='saturation';
+  g.fillStyle='hsl(0,0%,50%)';
+  g.fillRect(0,0,w,h);
+  g.restore();
+}
 function focusEnd(g){ g.restore(); }
-function setFocusMode(m){ focusMode=m||'all'; if(window.__simSyncGray) __simSyncGray(); draw(); }
+function setFocusMode(m){ focusMode=m||'all'; if(window.__simSyncGray) __simSyncGray(); if(window.__simSyncFog) __simSyncFog(); draw(); }
 
 /* ---------- przyciąganie (snap) do geometrii już narysowanej ----------
    Najpierw narożniki (najsilniejszy sygnał), potem osie: gdy punkt jest blisko
@@ -654,8 +671,8 @@ function draw(){
   if(f.bg){
     let img=bgCache[f.id];
     if(!img||img.src!==f.bg){ img=new Image(); img.src=f.bg; bgCache[f.id]=img; img.onload=()=>{f.bgW=img.naturalWidth;f.bgH=img.naturalHeight;draw();}; }
-    if(img.complete&&img.naturalWidth){ const k=f.bgPrevK??1; ctx.globalAlpha=f.bgAlpha??0.65;
-      ctx.drawImage(img,0,0,img.naturalWidth*k,img.naturalHeight*k); ctx.globalAlpha=1; }
+    if(img.complete&&img.naturalWidth){ const k=f.bgPrevK??1; ctx.save(); ctx.globalAlpha=f.bgAlpha??0.65;
+      ctx.drawImage(img,0,0,img.naturalWidth*k,img.naturalHeight*k); ctx.restore(); }
   }
   // podgląd maski ścian / regionów
   if(f.maskPrev){
@@ -677,12 +694,12 @@ function draw(){
        przy kryciu 0,62 dają na tle roboczym dokładnie ten kolor karteczki */
     const fillCol = roomFillTint(t.role);
     ctx.beginPath(); r.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath();
-    /* barwa i opis CO₂ tylko tam, gdzie CO₂ jest tematem rysunku: podłączone
-       sterowanie albo styl wyświetlania „tylko CO₂”. Inaczej symulacja zasypuje
-       rzut opisami 430 ppm w każdym pomieszczeniu. */
-    const co2=(focusMode==='co2'||(window.CTRL&&CTRL.connected))? roomCO2(r.id) : null, LIVEr=co2!=null;
+    /* CO₂: mgła rysuje się zawsze, gdy są dane (także w symulacji), a liczby
+       tylko tam, gdzie CO₂ jest tematem — przy podłączonym sterowaniu albo
+       w stylu wyświetlania „tylko CO₂”. */
+    const co2raw=roomCO2(r.id);
+    const co2=(focusMode==='co2'||(window.CTRL&&CTRL.connected))? co2raw : null, LIVEr=co2!=null;
     ctx.fillStyle=fillCol+(sel&&sel.kind==='room'&&sel.id===r.id?'0.95)':'0.62)'); ctx.fill();
-    if(LIVEr){ ctx.fillStyle=co2Color(co2, Math.min(0.55,Math.max(0,(co2-500)/1400))); ctx.fill(); }
     ctx.strokeStyle=col+'0.85)'; ctx.lineWidth=lw(sel&&sel.kind==='room'&&sel.id===r.id?3:1.6); ctx.stroke();
     if(!show2dLabels) return;
     const c=polyCentroid(r.pts), info=(C.rooms||{})[r.id];
@@ -861,9 +878,15 @@ function draw(){
     const isSel=sel&&sel.kind==='node'&&sel.id===n.id;
     ctx.beginPath();
     if(n.type==='person'){ // sylwetka: głowa + tułów
-      ctx.arc(n.x,n.y-r*0.55,r*0.42,0,7); ctx.fillStyle=isSel?'#A9EBC9':d.c; ctx.fill();
+      /* w symulacji mieszkańcy są biali z miękkim cieniem — na szarym rysunku
+         to jedyny sposób, żeby było widać, kto jest w domu */
+      const simP=!!window.__simGray;
+      if(simP){ ctx.shadowColor='rgba(18,20,28,.55)'; ctx.shadowBlur=lw(10); ctx.shadowOffsetY=lw(1.5); }
+      const pfill=isSel?'#A9EBC9':(simP?'#FFFFFF':d.c);
+      ctx.arc(n.x,n.y-r*0.55,r*0.42,0,7); ctx.fillStyle=pfill; ctx.fill();
       ctx.beginPath(); ctx.moveTo(n.x-r*0.75,n.y+r*0.9); ctx.quadraticCurveTo(n.x-r*0.8,n.y-r*0.15,n.x,n.y-r*0.1); ctx.quadraticCurveTo(n.x+r*0.8,n.y-r*0.15,n.x+r*0.75,n.y+r*0.9); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle='#fff'; ctx.lineWidth=lw(1.2); ctx.stroke();
+      ctx.shadowColor='transparent'; ctx.shadowBlur=0; ctx.shadowOffsetY=0;
+      ctx.strokeStyle=simP?'rgba(38,40,48,.65)':'#fff'; ctx.lineWidth=lw(simP?1:1.2); ctx.stroke();
       if(!n.roomId){ ctx.strokeStyle='#C03048'; ctx.setLineDash([lw(3),lw(2)]); ctx.beginPath(); ctx.arc(n.x,n.y,r*1.3,0,7); ctx.stroke(); ctx.setLineDash([]); }
       ctx.globalAlpha=1;
       return; }
@@ -887,6 +910,12 @@ function draw(){
     }
   });
   focusEnd(ctx);
+  /* odbarwienie symulacji, a po nim mgła CO₂ — jedyny kolor na szarym rysunku */
+  simGrayPass(ctx,cv.clientWidth,cv.clientHeight);
+  if(hasCO2()){
+    const ph=co2Phase();
+    f.rooms.forEach(r=>{ const c2=roomCO2(r.id); if(c2!=null) co2Fog(ctx,r.pts,c2,ph); });
+  }
   ctx.restore();
   if(window.drawLiveBadge) drawLiveBadge();
   document.getElementById('stScale').textContent = f.pxPerM?`skala: ${f.pxPerM.toFixed(1)} px/m (1:${fmt(100/ (f.pxPerM/37.8) ,0)}~)`:'skala: NIESKALIBROWANA — użyj narzędzia Kalibracja';
@@ -898,6 +927,41 @@ function selLabel(){
   if(sel.kind==='node'){ const n=f.nodes.find(x=>x.id===sel.id); return n?NODE_DEFS[n.type].label:''; }
   if(sel.kind==='seg'){ const s=f.segs.find(x=>x.id===sel.id); return s?(s.kind==='flx'?'przewód FLX':'kanał spiro'):''; }
   return '';
+}
+/* ---------- mgła CO₂ ----------
+   Stężenie rysujemy jako obłok, nie jako płaską plamę: kilka miękkich plam
+   gradientowych w obrysie pomieszczenia, które powoli dryfują. Gęstość i barwa
+   rosną ze stężeniem (430 ppm — czysto, 1600 ppm — pełne nasycenie).
+   `pts` są już w układzie docelowym, więc ta sama funkcja obsługuje rzut i 3D. */
+function co2Fog(g, pts, ppm, phase){
+  const k = Math.max(0, Math.min(1, (ppm-460)/1140));
+  if(k<=0.02) return;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  pts.forEach(p=>{ if(p.x<x0)x0=p.x; if(p.x>x1)x1=p.x; if(p.y<y0)y0=p.y; if(p.y>y1)y1=p.y; });
+  const w=x1-x0, h=y1-y0; if(!(w>0&&h>0)) return;
+  const cx=(x0+x1)/2, cy=(y0+y1)/2, R=Math.max(w,h)*0.62;
+  const t=phase||0;
+  g.save();
+  g.beginPath(); pts.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath(); g.clip();
+  const BLOBS=[[0.00,0.62,1.00],[2.10,0.46,0.80],[4.20,0.54,0.66],[1.05,0.30,0.52]];
+  BLOBS.forEach(([ph,amp,rad],i)=>{
+    const a=t*(0.5+0.17*i)+ph;
+    const px=cx+Math.cos(a)*w*0.22*amp, py=cy+Math.sin(a*0.83+ph)*h*0.24*amp;
+    const rr=R*rad*(0.85+0.15*Math.sin(a*1.3));
+    const gr=g.createRadialGradient(px,py,rr*0.05,px,py,rr);
+    gr.addColorStop(0, co2Color(ppm, 0.14+0.46*k));
+    gr.addColorStop(0.55, co2Color(ppm, 0.07+0.26*k));
+    gr.addColorStop(1, co2Color(ppm, 0));
+    g.fillStyle=gr; g.fillRect(x0-w*0.2,y0-h*0.2,w*1.4,h*1.4);
+  });
+  g.restore();
+}
+/* faza dryfu: powolny zegar (żeby obłok żył także przy zatrzymanej symulacji)
+   plus czas doby, dzięki czemu przy przewijaniu mgła wyraźnie się przelewa */
+function co2Phase(){
+  const clock = Date.now()/9000;
+  const day = (window.__simCO2 && window.HvacSim && HvacSim.state.open) ? HvacSim.state.min/60 : 0;
+  return clock + day;
 }
 function co2Color(ppm,a){ return ppm>1200?`rgba(192,48,72,${a})`:ppm>1000?`rgba(165,115,39,${a})`:ppm>800?`rgba(149,107,35,${a})`:`rgba(34,129,94,${a})`; }
 function roomName(r){ return r.name || (ROOM_TYPES[r.type]?.label.split(' — ')[0].split(' /')[0] ?? 'Pomieszczenie'); }

@@ -431,6 +431,8 @@ body.dnd,body.dnd *{cursor:grabbing !important}
 #wxCard .wx-rows div{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:var(--type-meta);font-size:11px;color:var(--text-secondary)}
 #wxCard .wx-rows b{font:500 11.5px/1 var(--font-core);color:var(--text-primary)}
 #wxCard .wx-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--border-hairline);display:flex;align-items:center;gap:4px;font:var(--type-meta);font-size:10px;color:var(--text-tertiary);white-space:nowrap;overflow:hidden}
+#wxPlace{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#wxSrc{flex:0 0 auto}
 #wxCard .wx-foot .i{width:10px;height:10px;flex:0 0 auto}
 
 /* ---------- przycisk symulacji (góra, środek schematu) ---------- */

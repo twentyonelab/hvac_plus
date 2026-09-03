@@ -160,6 +160,7 @@ function render3D(g,W,H,cam,opts){
     g.fillStyle='#8E9096'; g.font='11px Outfit, Segoe UI'; g.textAlign='left'; g.fillText(`${step} m`,b.x+4,b.y+4);
   }
   const font=(w,s)=>`${w||''} ${s}px Outfit, Segoe UI`.trim();
+  const co2Floors=[];   // podłogi ze stężeniem CO₂ — mgła rysowana na końcu, po odbarwieniu
   // kolejność malarska: kondygnacje od dołu; w kondygnacji: strop -> pomieszczenia -> ściany -> przewody -> węzły
   model.floors.forEach(fl=>{
     const f=fl.f;
@@ -185,8 +186,9 @@ function render3D(g,W,H,cam,opts){
         const flo=r.pts.map(p=>{ const w=v3W(fl,p); return v3P(w.X,w.Y,fl.z0,cam); });
         g.beginPath(); flo.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath();
         g.fillStyle=fillCol+(f.bg&&v3.showBg?'0.55)':'0.62)'); g.fill();
-        const c2r=(focusMode==='co2'||(window.CTRL&&CTRL.connected))? roomCO2(r.id) : null;
-        if(c2r!=null){ g.fillStyle=co2Color(c2r,Math.min(0.55,Math.max(0,(c2r-500)/1400))); g.fill(); }
+        const c2raw=roomCO2(r.id);
+        const c2r=(focusMode==='co2'||(window.CTRL&&CTRL.connected))? c2raw : null;
+        if(c2raw!=null) co2Floors.push({pts:flo, ppm:c2raw});
         g.strokeStyle=col+'0.9)'; g.lineWidth=1.4; g.stroke();
         if(v3.showWalls){
           const cei=r.pts.map(p=>{ const w=v3W(fl,p); return v3P(w.X,w.Y,fl.zc,cam); });
@@ -303,9 +305,14 @@ function render3D(g,W,H,cam,opts){
       else if(n.type==='person'){
         /* mieszkańcy jak w rzucie 2D: ciemna szarość, także pojawianie się w symulacji */
         if(window.__simPersonAlpha){ const pa=window.__simPersonAlpha(n); if(pa<=0.01){ return; } g.globalAlpha=pa; }
-        const pc=(NODE_DEFS.person&&NODE_DEFS.person.c)||'#4A4B50';
+        const simP=!!window.__simGray;
+        const pc=simP?'#FFFFFF':((NODE_DEFS.person&&NODE_DEFS.person.c)||'#4A4B50');
+        if(simP){ g.shadowColor='rgba(18,20,28,.55)'; g.shadowBlur=10; g.shadowOffsetY=2; }
         v3Cyl(g,cam,w.X,w.Y,fl.z0,0.17,1.25,isSel?'#A9EBC9':pc);
-        const hp=v3P(w.X,w.Y,fl.z0+1.45,cam); g.beginPath(); g.arc(hp.x,hp.y,Math.max(3,0.12*cam.scale),0,7); g.fillStyle=isSel?'#A9EBC9':v3Shade(pc,1.25); g.fill(); g.strokeStyle='#fff'; g.lineWidth=1; g.stroke();
+        const hp=v3P(w.X,w.Y,fl.z0+1.45,cam); g.beginPath(); g.arc(hp.x,hp.y,Math.max(3,0.12*cam.scale),0,7);
+        g.fillStyle=isSel?'#A9EBC9':(simP?'#FFFFFF':v3Shade(pc,1.25)); g.fill();
+        g.shadowColor='transparent'; g.shadowBlur=0; g.shadowOffsetY=0;
+        g.strokeStyle=simP?'rgba(38,40,48,.6)':'#fff'; g.lineWidth=1; g.stroke();
         top=v3P(w.X,w.Y,fl.z0+1.7,cam);
         g.globalAlpha=1;
       }
@@ -324,6 +331,10 @@ function render3D(g,W,H,cam,opts){
       }
     }
   });
+  /* odbarwienie symulacji jednym przejściem, a po nim mgła CO₂ na podłogach —
+     jedyny kolor na szarym modelu (tak samo jak w rzucie 2D) */
+  if(g===ctx) simGrayPass(g,W,H);
+  if(co2Floors.length){ const ph=co2Phase(); co2Floors.forEach(o=>co2Fog(g,o.pts,o.ppm,ph)); }
   // ---- podpowiedź / ostrzeżenia ----
   if(!opts.report){
     if(window.drawLiveBadge&&g===ctx) drawLiveBadge();
