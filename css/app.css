@@ -125,9 +125,9 @@ svg.i{width:16px;height:16px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-
 
 /* ---------- scena (rzut / 3D) ---------- */
 #stage{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;padding:2px 8px 16px 2px}
-.stage-h{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-8);padding:4px 6px 12px 6px}
+.stage-h{display:flex;align-items:center;justify-content:space-between;gap:var(--space-8);padding:2px 6px 10px 6px}
 .stage-t{display:flex;flex-direction:column;min-width:0}
-.stage-name{font:var(--type-display);letter-spacing:-.02em;border:none;background:transparent;color:var(--text-primary);outline:none;width:min(34vw,520px);padding:2px 6px;margin-left:-6px;border-radius:var(--radius-sm);transition:var(--transition-control);text-overflow:ellipsis}
+.stage-name{font:500 20px/1.25 var(--font-core);letter-spacing:-.01em;border:none;background:transparent;color:var(--text-primary);outline:none;width:min(34vw,520px);padding:2px 6px;margin-left:-6px;border-radius:var(--radius-sm);transition:var(--transition-control);text-overflow:ellipsis}
 .stage-name:hover{background:var(--state-hover)}
 .stage-name:focus{background:var(--surface-card);box-shadow:0 0 0 2px var(--mint-300)}
 .stage-name::placeholder{color:var(--text-tertiary)}
@@ -143,7 +143,8 @@ svg.i{width:16px;height:16px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-
 #floorbar button.b3d.active{background:var(--accent-secondary);color:var(--gray-900)}
 #canvaswrap{position:relative;flex:1 1 auto;min-height:0;border-radius:var(--radius-panel);background:var(--surface-inset);box-shadow:var(--shadow-inset-track);overflow:hidden}
 #canvaswrap.dragover{box-shadow:inset 0 0 0 2px var(--mint-500)}
-#cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;transition:filter .3s var(--ease-standard)}
+#cv.sim-gray{filter:grayscale(1)}
 #zoombar{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
 #zoombar button{width:36px;height:36px;border:none;border-radius:var(--radius-circle);background:var(--surface-card);color:var(--text-primary);box-shadow:var(--shadow-card);cursor:pointer;display:grid;place-items:center;font:var(--type-meta);transition:var(--transition-control)}
 #zoombar button:hover{box-shadow:var(--shadow-raised)}
@@ -400,7 +401,7 @@ body.dnd,body.dnd *{cursor:grabbing !important}
 .vbtn.on:hover{background:var(--lavender-200)}
 
 /* ---------- kafelek pogody na rysunku (nad paskiem stanu / plakietką LIVE) ---------- */
-#wxCard{position:absolute;left:14px;bottom:52px;z-index:6;width:196px;padding:10px 12px 8px;cursor:pointer;border-radius:var(--radius-md);background:var(--glass-fill);backdrop-filter:var(--blur-glass);-webkit-backdrop-filter:var(--blur-glass);box-shadow:var(--shadow-card);transition:var(--transition-control)}
+#wxCard{position:absolute;left:14px;bottom:52px;transition:bottom .3s var(--ease-out-soft);z-index:6;width:196px;padding:10px 12px 8px;cursor:pointer;border-radius:var(--radius-md);background:var(--glass-fill);backdrop-filter:var(--blur-glass);-webkit-backdrop-filter:var(--blur-glass);box-shadow:var(--shadow-card);transition:var(--transition-control)}
 #wxCard:hover{box-shadow:var(--shadow-raised)}
 #wxCard.min .wx-rows,#wxCard.min .wx-foot{display:none}
 #wxCard.min{width:auto;padding:8px 12px}
@@ -430,15 +431,19 @@ body.dnd,body.dnd *{cursor:grabbing !important}
 .sim-play .i{width:14px;height:14px}
 #simClock{font:500 17px/1 var(--font-core);min-width:52px}
 .sim-phase{font:var(--type-meta);color:var(--text-secondary);min-width:96px}
-#simTime{flex:1;accent-color:var(--gray-900)}
+.sim-hint{flex:1;font:var(--type-meta);font-size:10.5px;color:var(--text-tertiary);text-align:center}
 #simSpeed{height:28px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:var(--surface-card);font:var(--type-ui);font-size:12px;padding:0 6px}
 .sim-x{width:28px;height:28px;border:none;border-radius:var(--radius-circle);background:transparent;color:var(--text-secondary);cursor:pointer;display:grid;place-items:center}
 .sim-x:hover{background:var(--state-hover);color:var(--text-primary)}
 .sim-body{display:grid;grid-template-columns:1fr 424px;gap:16px;margin-top:10px;align-items:stretch}
-#simChart{width:100%;height:116px;display:block;border-radius:var(--radius-sm)}
+#simChart{width:100%;height:116px;display:block;border-radius:var(--radius-sm);cursor:ew-resize;touch-action:none}
 .sim-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .sim-k{background:var(--surface-card);border-radius:var(--radius-sm);padding:7px 9px;min-width:0}
 .sim-k b{display:block;font:500 13.5px/1.2 var(--font-core);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sim-k span{display:block;font:var(--type-meta);font-size:9.8px;color:var(--text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sim-k.mint{background:var(--mint-100)}
 @media (max-width:1320px){ .sim-body{grid-template-columns:1fr} .sim-kpis{grid-template-columns:repeat(6,1fr)} }
+
+body.sim-open #wxCard{bottom:214px}
+#wxCard.empty .wx-top{gap:8px}
+#wxCard.empty .wx-t b{font-size:13px;font-weight:500}

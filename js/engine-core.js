@@ -125,6 +125,18 @@ const F = ()=> state.floors[state.activeFloor];
 function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 function polyArea(pts){ let a=0; for(let i=0;i<pts.length;i++){const p=pts[i],q=pts[(i+1)%pts.length]; a+=p.x*q.y-q.x*p.y;} return Math.abs(a)/2; }
+/* szerokość wnętrza wielokąta na wysokości y, wokół punktu środkowego —
+   do dopasowania opisu pomieszczenia do jego rzeczywistej szerokości */
+function spanAtY(pts,y){
+  const xs=[];
+  for(let i=0;i<pts.length;i++){ const a=pts[i], b=pts[(i+1)%pts.length];
+    if((a.y<=y&&b.y>y)||(b.y<=y&&a.y>y)) xs.push(a.x+(y-a.y)/(b.y-a.y)*(b.x-a.x)); }
+  if(xs.length<2) return null;
+  xs.sort((p,q)=>p-q);
+  return xs[xs.length-1]-xs[0];
+}
+function polyBox(pts){ const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  return {w:Math.max(...xs)-Math.min(...xs), h:Math.max(...ys)-Math.min(...ys)}; }
 function polyCentroid(pts){ let x=0,y=0; pts.forEach(p=>{x+=p.x;y+=p.y}); return {x:x/pts.length,y:y/pts.length}; }
 function pointInPoly(pt,pts){ let inside=false; for(let i=0,j=pts.length-1;i<pts.length;j=i++){ const xi=pts[i].x,yi=pts[i].y,xj=pts[j].x,yj=pts[j].y; if(((yi>pt.y)!=(yj>pt.y)) && (pt.x < (xj-xi)*(pt.y-yi)/(yj-yi)+xi)) inside=!inside; } return inside; }
 function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
@@ -158,7 +170,7 @@ const NODE_DEFS={
   intake:  {label:'Czerpnia',   c:'#248964', r:11, sym:'CZ'},
   exhout:  {label:'Wyrzutnia',  c:'#A57327', r:11, sym:'WY'},
   riser:   {label:'Pion',       c:'#4A4B50',    r:10, sym:'P'},
-  person:  {label:'Mieszkaniec', c:'#7B5CC1', r:9, sym:'👤'}
+  person:  {label:'Mieszkaniec', c:'#4A4B50', r:9, sym:'👤'}
 };
 
 function resize(){ cv.width=cv.clientWidth*devicePixelRatio; cv.height=cv.clientHeight*devicePixelRatio; draw(); }
@@ -225,6 +237,37 @@ function focusStart(g,group){
 }
 function focusEnd(g){ g.restore(); }
 function setFocusMode(m){ focusMode=m||'all'; draw(); }
+
+/* ---------- przyciąganie (snap) do geometrii już narysowanej ----------
+   Najpierw narożniki (najsilniejszy sygnał), potem osie: gdy punkt jest blisko
+   pionu albo poziomu istniejącego wierzchołka, dociągamy tylko tę współrzędną. */
+let snapOn = true;
+let snapHit = null;          // {x,y,kind:'corner'|'axis'} — do podświetlenia
+function snapPoint(w, skipRoomId){
+  snapHit=null;
+  if(!snapOn) return w;
+  const f=F(); if(!f) return w;
+  const tol=10/view.z;
+  const pts=[];
+  f.rooms.forEach(r=>{ if(r.id===skipRoomId) return; r.pts.forEach(p=>pts.push(p)); });
+  f.nodes.forEach(n=>{ if(n.type==='ahu'||n.type==='man_sup'||n.type==='man_exh'||n.type==='riser') pts.push(n); });
+  if(!pts.length) return w;
+  // narożnik
+  let best=null, bd=tol;
+  pts.forEach(p=>{ const d=dist(w,p); if(d<bd){ bd=d; best=p; } });
+  if(best){ snapHit={x:best.x,y:best.y,kind:'corner'}; return {x:best.x,y:best.y}; }
+  // osie
+  let sx=null, sy=null, dx=tol, dy=tol;
+  pts.forEach(p=>{ const ax=Math.abs(p.x-w.x), ay=Math.abs(p.y-w.y);
+    if(ax<dx){ dx=ax; sx=p.x; } if(ay<dy){ dy=ay; sy=p.y; } });
+  if(sx!=null||sy!=null){
+    const out={x:sx!=null?sx:w.x, y:sy!=null?sy:w.y};
+    snapHit={...out, kind:'axis'};
+    return out;
+  }
+  return w;
+}
+function setSnap(on){ snapOn=!!on; toast(snapOn?'Przyciąganie do narożników i linii włączone.':'Przyciąganie wyłączone.'); draw(); }
 
 /* ---------- edycja obrysu: trafienia w uchwyty ---------- */
 function roomEditRoom(){ return roomEdit? F().rooms.find(x=>x.id===roomEdit) : null; }
@@ -401,8 +444,16 @@ cv.addEventListener('mousemove',e=>{
   const f=F();
   document.getElementById('stCoords').textContent = f.pxPerM? `${(w.x/f.pxPerM).toFixed(2)} m, ${(w.y/f.pxPerM).toFixed(2)} m` : `${w.x|0}, ${w.y|0} px`;
   if(mouse.panStart){ view.x=mouse.panStart.vx+(e.offsetX-mouse.panStart.mx); view.y=mouse.panStart.vy+(e.offsetY-mouse.panStart.my); draw(); return; }
-  if(mouse.dragVertex){ moveVertex(mouse.dragVertex,w); recalc(); draw(); return; }
+  if(mouse.dragVertex){ moveVertex(mouse.dragVertex,snapPoint(w,mouse.dragVertex.room.id)); recalc(); draw(); return; }
   if(mouse.dragNode){ mouse.dragNode.x=w.x; mouse.dragNode.y=w.y; if(mouse.dragNode.type==='person'||mouse.dragNode.type==='term_sup'||mouse.dragNode.type==='term_exh'){ const r=roomAt(w); mouse.dragNode.roomId=r?r.id:null; } recalc(); draw(); return; }
+  /* narzędzia pomieszczeń: licz przyciąganie także przed pierwszym kliknięciem,
+     żeby znacznik narożnika / linii był widoczny od razu */
+  if(tool==='room'||tool==='room_rect'){
+    const prev=snapHit; snapPoint(w);
+    const moved = (!!prev!==!!snapHit) || (prev&&snapHit&&(prev.x!==snapHit.x||prev.y!==snapHit.y||prev.kind!==snapHit.kind));
+    if(draft||moved) draw();
+    return;
+  }
   if(draft) draw();
 });
 /* zakończenie przeciągania wierzchołka: mouseup, pointerup i wyjechanie kursorem
@@ -426,11 +477,12 @@ cv.addEventListener('click',e=>{
   }
   if(tool==='room'){
     if(!draft) draft={type:'room',pts:[]};
-    draft.pts.push(w); draw(); return;
+    draft.pts.push(snapPoint(w)); draw(); return;
   }
   if(tool==='room_rect'){
-    if(!draft) draft={type:'rect',pts:[w]};
-    else finishRoomRect(draft.pts[0],w);
+    const sw=snapPoint(w);
+    if(!draft) draft={type:'rect',pts:[sw]};
+    else finishRoomRect(draft.pts[0],sw);
     draw(); return;
   }
   if(tool==='roi'){
@@ -525,8 +577,29 @@ function toast(t){ setHint(t); clearTimeout(toastT); toastT=setTimeout(()=>setHi
 
 /* ---------- rysowanie ---------- */
 const bgCache={}, maskImgCache={};
+/* rejestr miejsc zajętych przez opisy w jednej klatce rysunku — opisy przewodów
+   i anemostatów odsuwają się od już narysowanych albo znikają, gdy nie ma miejsca.
+   Bez tego kilka strumieni w wąskim pomieszczeniu drukowało się jeden na drugim. */
+let lblRects=[];
+function lblSlot(x,y,w,h,tries){
+  const hit=(by)=>lblRects.some(q=>x<q.x+q.w&&x+w>q.x&&by<q.y+q.h&&by+h>q.y);
+  let by=y;
+  if(hit(by)){
+    const step=h*1.05; let ok=false;
+    for(let i=1;i<=(tries||4)&&!ok;i++)
+      for(const dy of [-i*step,i*step]) if(!hit(y+dy)){ by=y+dy; ok=true; break; }
+    if(!ok) return null;
+  }
+  lblRects.push({x,y:by,w,h}); return by;
+}
+function lblTake(x,y,w,h){ lblRects.push({x,y,w,h}); }
 function draw(){
+  lblRects=[];
   const f=F(); if(!f) return;
+  /* symbole urządzeń rezerwują miejsce jako pierwsze — opisy pomieszczeń
+     i przewodów ustępują im, a nie drukują się na nich */
+  if(show2dLabels) f.nodes.forEach(n=>{ const d=NODE_DEFS[n.type]; if(!d||n.type==='person') return;
+    const r=d.r/view.z*Math.min(view.z,1.6); lblRects.push({x:n.x-r*1.4,y:n.y-r,w:r*2.8,h:r*2}); });
   if(window.__mode3D&&window.draw3D){ draw3D(); return; }
   ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);
   ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
@@ -564,14 +637,58 @@ function draw(){
     ctx.strokeStyle=col+'0.85)'; ctx.lineWidth=lw(sel&&sel.kind==='room'&&sel.id===r.id?3:1.6); ctx.stroke();
     if(!show2dLabels) return;
     const c=polyCentroid(r.pts), info=(C.rooms||{})[r.id];
-    ctx.fillStyle='#1C1C1E'; ctx.textAlign='center';
-    ctx.font=`600 ${lw(13)}px Outfit, Segoe UI`;
-    ctx.fillText(roomName(r), c.x, c.y-lw(14));
-    if(zoningOn()){ const z=roomZone(r); if(z){ const tw=ctx.measureText(roomName(r)).width; ctx.font=`700 ${lw(9.5)}px Outfit, Segoe UI`; ctx.fillStyle=ZONES[z].c; ctx.fillText(ZONES[z].short, c.x+tw/2+lw(12), c.y-lw(14)); ctx.fillStyle='#1C1C1E'; } }
-    ctx.font=`${lw(11)}px Outfit, Segoe UI`; ctx.fillStyle='#6B6D73';
-    if(info){ ctx.fillText(`${fmt(info.area,1)} m²`+(info.occ?`  · ${info.occ} os.`:'')+(info.sup?`  ▸ N ${fmt(info.sup)} m³/h`:'')+(info.exh?`  ▸ W ${fmt(info.exh)} m³/h`:''), c.x, c.y+lw(2)); }
-    if(LIVEr){ ctx.font=`700 ${lw(11)}px Outfit, Segoe UI`; ctx.fillStyle=co2Color(co2,1); ctx.fillText(`CO₂ ${fmt(co2)} ppm`, c.x, c.y+lw(15)); }
-    else ctx.fillText(f.pxPerM?`${fmt(polyArea(r.pts)/f.pxPerM**2,1)} m²`:'', c.x, c.y+lw(2));
+    /* opis pomieszczenia mieści się w pomieszczeniu: mierzymy wolną szerokość
+       w miejscu opisu i dobieramy układ (jedna linia → kilka linii → sama nazwa
+       → sam numer) plus łagodne pomniejszenie. Inaczej opisy wąskich pokoi
+       wchodziły na sąsiadów i na siebie. */
+    const span=spanAtY(r.pts,c.y), box=polyBox(r.pts);
+    const availW=(span?span:box.w)-lw(10), availH=box.h-lw(8);
+    const nameTxt=roomName(r), numTxt=(nameTxt.match(/^\d+\/\d+/)||[nameTxt.split(' ')[0]])[0];
+    const parts=[];
+    if(info){
+      parts.push(`${fmt(info.area,1)} m²`+(info.occ?` · ${info.occ} os.`:''));
+      const fl=[]; if(info.sup) fl.push(`▸N ${fmt(info.sup)}`); if(info.exh) fl.push(`▸W ${fmt(info.exh)}`);
+      if(fl.length) parts.push(fl.join(' · ')+' m³/h');
+    } else if(f.pxPerM) parts.push(`${fmt(polyArea(r.pts)/f.pxPerM**2,1)} m²`);
+    const FN=13, FI=11, FC=11;
+    const meas=(t,size,weight)=>{ ctx.font=`${weight} ${lw(size)}px Outfit, Segoe UI`; return ctx.measureText(t).width; };
+    const co2Row = LIVEr?{t:`CO₂ ${fmt(co2)} ppm`,s:FC,w:'700',c:co2Color(co2,1)}:null;
+    const nameRow={t:nameTxt,s:FN,w:'600',c:'#1C1C1E'};
+    const infoRow=t=>({t,s:FI,w:'400',c:'#6B6D73'});
+    const cands=[];
+    if(parts.length) cands.push([nameRow, infoRow(parts.join('  ·  '))]);
+    if(parts.length>1) cands.push([nameRow, ...parts.map(infoRow)]);
+    cands.push([nameRow]);
+    cands.push([{...nameRow,t:numTxt}]);
+    let rows=null, k=1;
+    for(const cd of cands){
+      const set=co2Row?[...cd,co2Row]:cd;
+      const wmax=Math.max(...set.map(o=>meas(o.t,o.s,o.w)));
+      const hsum=set.reduce((a,o)=>a+lw(o.s*1.35),0);
+      const kk=Math.min(1, availW/wmax, availH/hsum);
+      if(kk>=0.8){ rows=set; k=kk; break; }
+    }
+    if(!rows){ const set=co2Row?[{...nameRow,t:numTxt},co2Row]:[{...nameRow,t:numTxt}];
+      const wmax=Math.max(...set.map(o=>meas(o.t,o.s,o.w)));
+      rows=set; k=Math.max(0.6,Math.min(1,availW/wmax)); }
+    ctx.textAlign='center';
+    const rowH=rows.map(o=>lw(o.s*k*1.35)), totalH=rowH.reduce((a,b)=>a+b,0);
+    const bw=Math.max(...rows.map(o=>meas(o.t,o.s*k,o.w)))+lw(10);
+    const bx=c.x-bw/2, bh=totalH+lw(4);
+    let byTop=lblSlot(bx, c.y-totalH/2-lw(2), bw, bh, 3);
+    if(byTop==null){ byTop=c.y-totalH/2-lw(2); lblTake(bx,byTop,bw,bh); }   // opis pomieszczenia zawsze widoczny
+    ctx.fillStyle='rgba(255,255,255,.86)';
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(bx, byTop, bw, bh, lw(6)); ctx.fill(); }
+    else ctx.fillRect(bx, byTop, bw, bh);
+    let y=byTop+lw(2);
+    rows.forEach((o,i)=>{
+      ctx.font=`${o.w} ${lw(o.s*k)}px Outfit, Segoe UI`; ctx.fillStyle=o.c;
+      ctx.fillText(o.t, c.x, y+lw(o.s*k)*0.95);
+      if(i===0&&zoningOn()){ const z=roomZone(r); if(z){ const tw=ctx.measureText(o.t).width;
+        ctx.font=`700 ${lw(9.5*k)}px Outfit, Segoe UI`; ctx.fillStyle=ZONES[z].c;
+        ctx.fillText(ZONES[z].short, c.x+tw/2+lw(11*k), y+lw(o.s*k)*0.95); } }
+      y+=rowH[i];
+    });
   });
   focusEnd(ctx);
   // segmenty (trasy rozsunięte — nawiew i wywiew nie pokrywają się)
@@ -600,8 +717,11 @@ function draw(){
       ctx.font=`600 ${lw(10.5)}px Outfit, Segoe UI`; ctx.textAlign='center';
       const label= LIVE ? `${fmt(lq)} m³/h ▶` : (s.kind==='flx' ? `${fmt(res.q)} m³/h · ${res.tubes}×FLX${state.flxDia}` : `${fmt(res.q)} m³/h · Ø${res.d}`);
       const tw=ctx.measureText(label).width;
-      ctx.fillStyle='rgba(255,255,255,.85)'; ctx.fillRect(m2.x-tw/2-lw(3),m2.y-lw(16),tw+lw(6),lw(13));
-      ctx.fillStyle='#1C1C1E'; ctx.fillText(label,m2.x,m2.y-lw(6));
+      const ly=lblSlot(m2.x-tw/2-lw(3), m2.y-lw(16), tw+lw(6), lw(13), 5);
+      if(ly!=null){
+        ctx.fillStyle='rgba(255,255,255,.85)'; ctx.fillRect(m2.x-tw/2-lw(3),ly,tw+lw(6),lw(13));
+        ctx.fillStyle='#1C1C1E'; ctx.fillText(label,m2.x,ly+lw(10));
+      }
     }
   });
   focusEnd(ctx);
@@ -630,6 +750,19 @@ function draw(){
       });
     }
   }
+  // znacznik przyciągnięcia
+  if(snapHit && (tool==='room'||tool==='room_rect'||mouse.dragVertex)){
+    const r=lw(5);
+    ctx.strokeStyle='#4ECB95'; ctx.lineWidth=lw(1.8);
+    if(snapHit.kind==='corner'){
+      ctx.beginPath(); ctx.rect(snapHit.x-r,snapHit.y-r,r*2,r*2); ctx.stroke();
+    } else {
+      ctx.setLineDash([lw(4),lw(4)]);
+      ctx.beginPath(); ctx.moveTo(snapHit.x,snapHit.y-lw(60)); ctx.lineTo(snapHit.x,snapHit.y+lw(60));
+      ctx.moveTo(snapHit.x-lw(60),snapHit.y); ctx.lineTo(snapHit.x+lw(60),snapHit.y); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
   // szkic segmentu w trakcie
   if(draft&&draft.type==='seg'){
     const a=f.nodes.find(n=>n.id===draft.a);
@@ -639,14 +772,15 @@ function draw(){
     ctx.strokeStyle='#1C1C1E'; ctx.lineWidth=lw(2); ctx.setLineDash([lw(6),lw(4)]); ctx.stroke(); ctx.setLineDash([]);
   }
   if(draft&&draft.type==='rect'){
-    const a=draft.pts[0];
+    const a=draft.pts[0], sp=snapPoint({x:mouse.wx,y:mouse.wy});
+    mouse.sx=sp.x; mouse.sy=sp.y;
     ctx.strokeStyle='#22815E'; ctx.lineWidth=lw(2); ctx.setLineDash([lw(6),lw(4)]);
-    ctx.strokeRect(Math.min(a.x,mouse.wx),Math.min(a.y,mouse.wy),Math.abs(mouse.wx-a.x),Math.abs(mouse.wy-a.y));
+    ctx.strokeRect(Math.min(a.x,sp.x),Math.min(a.y,sp.y),Math.abs(sp.x-a.x),Math.abs(sp.y-a.y));
     ctx.setLineDash([]);
     if(F().pxPerM){
-      const wm=Math.abs(mouse.wx-a.x)/F().pxPerM, hm=Math.abs(mouse.wy-a.y)/F().pxPerM;
+      const wm=Math.abs(sp.x-a.x)/F().pxPerM, hm=Math.abs(sp.y-a.y)/F().pxPerM;
       ctx.fillStyle='#1C1C1E'; ctx.font=`600 ${lw(11.5)}px Outfit, Segoe UI`; ctx.textAlign='center';
-      ctx.fillText(`${fmt(wm,2)} × ${fmt(hm,2)} m = ${fmt(wm*hm,1)} m²`,(a.x+mouse.wx)/2,Math.min(a.y,mouse.wy)-lw(7));
+      ctx.fillText(`${fmt(wm,2)} × ${fmt(hm,2)} m = ${fmt(wm*hm,1)} m²`,(a.x+sp.x)/2,Math.min(a.y,sp.y)-lw(7));
     }
   }
   if(draft&&draft.type==='room'){
@@ -672,6 +806,8 @@ function draw(){
   // węzły
   focusStart(ctx,'nodes');
   f.nodes.forEach(n=>{
+    /* symulacja doby chowa mieszkańców, których w danej chwili nie ma w domu */
+    if(n.type==='person'&&window.__simPersonAlpha){ const a=window.__simPersonAlpha(n); if(a<=0.01) return; ctx.globalAlpha=a; }
     const d=NODE_DEFS[n.type], r=d.r/view.z*Math.min(view.z,1.6);
     const isSel=sel&&sel.kind==='node'&&sel.id===n.id;
     ctx.beginPath();
@@ -680,6 +816,7 @@ function draw(){
       ctx.beginPath(); ctx.moveTo(n.x-r*0.75,n.y+r*0.9); ctx.quadraticCurveTo(n.x-r*0.8,n.y-r*0.15,n.x,n.y-r*0.1); ctx.quadraticCurveTo(n.x+r*0.8,n.y-r*0.15,n.x+r*0.75,n.y+r*0.9); ctx.closePath(); ctx.fill();
       ctx.strokeStyle='#fff'; ctx.lineWidth=lw(1.2); ctx.stroke();
       if(!n.roomId){ ctx.strokeStyle='#C03048'; ctx.setLineDash([lw(3),lw(2)]); ctx.beginPath(); ctx.arc(n.x,n.y,r*1.3,0,7); ctx.stroke(); ctx.setLineDash([]); }
+      ctx.globalAlpha=1;
       return; }
     if(n.type==='ahu'){ ctx.rect(n.x-r*1.4,n.y-r,r*2.8,r*2); } else ctx.arc(n.x,n.y,r,0,7);
     ctx.fillStyle=isSel?'#A9EBC9':(d.c||d.color||'#1C1C1E'); ctx.fill();
@@ -688,7 +825,17 @@ function draw(){
     ctx.fillText(d.sym+(n.type==='riser'?n.num:''),n.x,n.y+r*0.05);
     ctx.textBaseline='alphabetic';
     const info=(window.CALC?.nodes||{})[n.id];
-    if(info&&info.q&&show2dLabels){ const LIVE=window.CTRL&&CTRL.connected&&(n.type==='term_sup'||n.type==='term_exh'); const q=LIVE?(CTRL.live.nodes[n.id]??info.q):info.q; ctx.font=`600 ${lw(10)}px Outfit, Segoe UI`; ctx.fillStyle=LIVE?'#22815E':'#1C1C1E'; ctx.fillText(`${fmt(q)} m³/h`,n.x,n.y+r+lw(11)); }
+    if(info&&info.q&&show2dLabels){
+      const LIVE=window.CTRL&&CTRL.connected&&(n.type==='term_sup'||n.type==='term_exh');
+      const q=LIVE?(CTRL.live.nodes[n.id]??info.q):info.q;
+      ctx.font=`600 ${lw(10)}px Outfit, Segoe UI`;
+      const txt=`${fmt(q)} m³/h`, tw=ctx.measureText(txt).width;
+      const ly=lblSlot(n.x-tw/2-lw(3), n.y+r+lw(1), tw+lw(6), lw(12), 5);
+      if(ly!=null){
+        ctx.fillStyle='rgba(255,255,255,.85)'; ctx.fillRect(n.x-tw/2-lw(3),ly,tw+lw(6),lw(12));
+        ctx.fillStyle=LIVE?'#22815E':'#1C1C1E'; ctx.fillText(txt,n.x,ly+lw(9.5));
+      }
+    }
   });
   focusEnd(ctx);
   ctx.restore();

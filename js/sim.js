@@ -142,14 +142,33 @@
     g.fillText(`0 – ${Math.round(maxQ)} W · czerwone: bez odzysku · niebieskie: po odzysku`,6,10);
   }
 
+  /* ---------- mieszkańcy obecni w danej chwili ---------- */
+  let present = new Set();
+  const fade = new Map();
+  function updatePresence(n){
+    const ids=[];
+    state.floors.forEach(f=>f.nodes.forEach(x=>{ if(x.type==='person') ids.push(x.id); }));
+    ids.sort();
+    present = new Set(ids.slice(0, Math.min(n, ids.length)));
+  }
+  window.__simPersonAlpha = node => {
+    if(!S.open) return 1;
+    const target = present.has(node.id) ? 1 : 0;
+    if(!S.playing){ fade.set(node.id,target); return target; }
+    let a = fade.get(node.id); if(a==null) a=target;
+    a += (target-a)*0.16; if(Math.abs(target-a)<0.02) a=target;
+    fade.set(node.id,a);
+    return a;
+  };
+
   /* ---------- odczyty ---------- */
   function refresh(){
     const { sum } = dayCurve();
     const p = pointAt(S.min, sum.ctx);
+    updatePresence(p.occ.n);
     const f1 = (x,u,d=0)=> `${x.toLocaleString('pl-PL',{minimumFractionDigits:d,maximumFractionDigits:d})} ${u}`;
     $('#simClock').textContent = hhmm(S.min);
     $('#simPhase').textContent = p.sun>0.02 ? (p.sun>0.5?'dzień':'świt / zmierzch') : 'noc';
-    $('#simTime').value = S.min;
     $('#simTsup').textContent = f1(p.tSup,'°C',1);
     $('#simTout').textContent = f1(p.tOut,'°C',1);
     $('#simPow').textContent  = f1(p.qZ+p.fan,'W');
@@ -200,8 +219,10 @@
     S.open=on;
     $('#simSheet').hidden=!on;
     $('#simBtn').classList.toggle('on',on);
-    if(!on) play(false); else { cache.key=''; refresh(); }
-    if(window.syncWeatherCard) syncWeatherCard();   // kafelek pogody ustępuje arkuszowi
+    document.body.classList.toggle('sim-open',on);
+    cv.classList.toggle('sim-gray',on);             // na razie cały rysunek w szarości
+    if(!on){ play(false); fade.clear(); } else { cache.key=''; refresh(); }
+    if(window.syncWeatherCard) syncWeatherCard();
     if(window.draw) draw();
   }
 
@@ -209,7 +230,20 @@
   $('#simBtn').addEventListener('click',()=>open(!S.open));
   $('#simClose').addEventListener('click',()=>open(false));
   $('#simPlay').addEventListener('click',()=>play(!S.playing));
-  $('#simTime').addEventListener('input',e=>{ S.min=+e.target.value; if(S.playing) play(false); refresh(); });
+  /* przewijanie po wykresie — ta sama skala co dane, więc kropka nigdy się nie rozjeżdża */
+  (function(){
+    const chart=$('#simChart'); let scrub=false;
+    const setFromX=e=>{
+      const r=chart.getBoundingClientRect();
+      S.min=clamp((e.clientX-r.left)/r.width,0,1)*1439;
+      refresh();
+    };
+    chart.addEventListener('pointerdown',e=>{ scrub=true; chart.setPointerCapture(e.pointerId);
+      if(S.playing) play(false); setFromX(e); });
+    chart.addEventListener('pointermove',e=>{ if(scrub) setFromX(e); });
+    chart.addEventListener('pointerup',e=>{ scrub=false; try{chart.releasePointerCapture(e.pointerId);}catch(_){} });
+    chart.addEventListener('pointercancel',()=>{ scrub=false; });
+  })();
   $('#simSpeed').addEventListener('change',e=>{ S.speed=+e.target.value; S.t0=0; });
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape' && S.open) open(false);

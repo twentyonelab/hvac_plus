@@ -11,8 +11,9 @@ Aplikacja webowa 21 zmysłów do projektowania wentylacji mechanicznej z odzyski
 3. Urządzenia i sieć: centrala, rozdzielacze, anemostaty, czerpnia, wyrzutnia, piony, kanały spiro i przewody FLX. Urządzenia wstawia się **przeciągnięciem karty** z szyny narzędzi na rzut albo kliknięciem karty i kliknięciem na rzucie.
 4. Obliczenia: bilans powietrza (PN-83/B-03430, WT §147–155), strefy dzień/noc, wymiarowanie przewodów, spręż, dobór centrali HRU, zestawienie materiałów, lista kontrolna zgodności.
 5. Widok 3D (aksonometria), symulator sterowania (Modbus / GATE) z pogodą z Open-Meteo jako warunkami zewnętrznymi, raport do wydruku z arkuszami rysunkowymi.
-6. Symulacja doby: oś czasu 24 h, pogoda z Open-Meteo jako poziom temperatury zewnętrznej, profil obłożenia, moc grzania powietrza, temperatura nawiewu i oszczędność z odzysku; rysunek ciemnieje na noc.
-7. Styl wyświetlania („oczko”): wyróżnienie jednej warstwy — tylko kanały, tylko urządzenia, tylko pomieszczenia, tylko CO₂ — reszta rysunku szara i przy 20% krycia. Działa identycznie w 2D i 3D.
+6. Symulacja doby: przewijanie po wykresie (kursor zawsze stoi na danych), pogoda z Open-Meteo jako poziom temperatury zewnętrznej, profil obłożenia, moc grzania powietrza, temperatura nawiewu i oszczędność z odzysku; rysunek jest szary i ciemnieje na noc, a mieszkańcy pojawiają się i znikają zgodnie z obłożeniem.
+7. Przyciąganie (snap) przy rysowaniu i edycji pomieszczeń: narożniki i linie już wstawionych obrysów, ze znacznikiem pod kursorem.
+8. Styl wyświetlania („oczko”): wyróżnienie jednej warstwy — tylko kanały, tylko urządzenia, tylko pomieszczenia, tylko CO₂ — reszta rysunku szara i przy 20% krycia. Działa identycznie w 2D i 3D.
 
 ## Struktura
 
@@ -71,6 +72,8 @@ Moduł `js/weather.js` pobiera bieżące warunki z Open-Meteo (bez klucza i reje
 - **Panel projektu przypięty do prawej krawędzi.** `#side` jest `position:fixed`, a `#main` ma margines równy jego szerokości. Dzięki temu pełny ekran to animacja jednej wartości (`width: 392px → 100vw`), a nie przeliczanie układu — panel płynnie wyjeżdża w lewo i przykrywa rysunek. W pełnym ekranie treść panelu układa się w kolumny (`column-width: 360px`).
 - **Model symulacji jest jawny i prosty.** Moc grzania powietrza to `V·ρ·cp·ΔT` przed odzyskiem i `·(1−η)` po nim, temperatura nawiewu `t_zewn + η(t_wewn − t_zewn)`, poniżej −3 °C sprawność spada o 18% (odszranianie), wentylatory liczone ryczałtem 0,35 W na m³/h. Profil doby: noc 60% nominału, dom pusty 45%, gotowanie 120%. To ma pokazywać zależności, nie zastępować obliczeń projektowych — i tak jest opisane w interfejsie.
 - **Wyróżnianie warstw jako stan rysowania, nie druga scena.** `focusStart(ctx, grupa)` / `focusEnd(ctx)` owijają pętle rysujące (pomieszczenia, przewody, urządzenia) w 2D i 3D; przygaszenie to `globalAlpha 0.2` plus `filter: grayscale(1)`. Jedna definicja `FOCUS_KEEP` rządzi obydwoma widokami, więc nie mogą się rozjechać.
+- **Opisy na rzucie nie nachodzą na siebie.** Każda klatka rysunku ma rejestr zajętych prostokątów (`lblRects`): najpierw miejsce rezerwują symbole urządzeń, potem opisy pomieszczeń, na końcu opisy przewodów i anemostatów — te odsuwają się o wysokość wiersza albo znikają, gdy nie ma miejsca. Opis pomieszczenia dodatkowo dopasowuje się do jego szerokości: jedna linia → kilka linii → sama nazwa → sam numer, z łagodnym pomniejszeniem. Opis pomieszczenia nigdy nie znika.
+- **Kafelek pogody jest zawsze na rysunku.** Bez odczytu zaprasza do podania lokalizacji (klik otwiera zakładkę „Sterowanie"), z odczytem pokazuje temperaturę i warunki; przy otwartej symulacji przesuwa się nad panel osi czasu.
 - **Kolory rysunku to warstwa semantyczna, nie dekoracja.** Zmiana palety = zmiana wartości w jednym miejscu (zmienne CSS + stałe silnika), a nie przy każdym `fillStyle`.
 - **UI podmienia globalne funkcje renderujące** (`renderFloorbar`, `refreshAll`, `setTool`) zamiast edytować silnik. Aktualizacja silnika = podmiana plików `engine-*.js`.
 

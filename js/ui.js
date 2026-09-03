@@ -93,10 +93,19 @@
     const W=window.HvacWeather, card=$('#wxCard');
     if(!card) return;
     const r=W&&W.last;
-    const simOpen=window.HvacSim && HvacSim.state && HvacSim.state.open;
-    if(!r||simOpen){ card.hidden=true; return; }
     const v=(x,u,d=0)=> x==null? '—' : `${fmt(x,d)} ${u}`;
     card.hidden=false;
+    if(!r){
+      /* brak odczytu: kafelek zostaje na swoim miejscu i mówi, czego brakuje */
+      card.classList.add('empty','min');
+      $('#wxTemp').textContent='Pogoda';
+      $('#wxDesc').textContent=(state.weatherPlace||'').trim()
+        ? (W&&W.lastError? 'próba nieudana — ponowi się' : 'pobieranie…')
+        : 'kliknij, aby podać lokalizację';
+      card.title='Pogoda z Open-Meteo — kliknij, aby ustawić lokalizację w zakładce Sterowanie';
+      return;
+    }
+    card.classList.remove('empty');
     $('#wxTemp').textContent = r.tempC==null? '—' : `${fmt(r.tempC,1)} °C`;
     $('#wxDesc').textContent = `zewnętrznie · ${r.text||'—'}`;
     $('#wxHum').textContent  = v(r.humidity,'%');
@@ -105,7 +114,15 @@
     $('#wxPlace').textContent= r.place||'—';
     card.title = `Odczyt ${r.ts}${W.ageMinutes()!=null?` (${W.ageMinutes()} min temu)`:''} · Open-Meteo`;
   }
-  $('#wxCard').addEventListener('click',()=>$('#wxCard').classList.toggle('min'));
+  $('#wxCard').addEventListener('click',()=>{
+    const card=$('#wxCard');
+    if(card.classList.contains('empty')){       // bez odczytu: prowadzimy do ustawienia lokalizacji
+      const t=document.querySelector('#tabs button[data-pane="ster"]');
+      if(t){ t.click(); setTimeout(()=>{ const i=document.getElementById('wtPlace'); if(i){ i.focus(); i.select(); } },120); }
+      return;
+    }
+    card.classList.toggle('min');
+  });
   window.syncWeatherCard=syncWeatherCard;
   syncWeatherCard();
   setInterval(()=>{                     // odświeżenie kafelka; moduł sam pilnuje limitów zapytań
