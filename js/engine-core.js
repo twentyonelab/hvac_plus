@@ -98,6 +98,8 @@ function loadDemo(){ state=JSON.parse(JSON.stringify(DEMO_PROJECT)); state.activ
 let sel = null;               // {kind:'room'|'node'|'seg', floor, id}
 let tool = 'select';
 let roomEdit = null;       // id pomieszczenia w trybie edycji obrysu
+let roomEditMode = 'ortho';// 'ortho' — trzyma kąty proste, 'free' — swobodnie
+let focusMode = 'all';     // wyróżnienie warstwy: all | segs | nodes | rooms | co2
 let bgAdjust = false;      // otwarty panel „Popraw” podkładu
 let show2dLabels = true;   // warstwa „opisy” w rzucie 2D (panel Warstwy)
 const undoStack = [];
@@ -212,6 +214,18 @@ function placeNodeAt(type,w,opt){
   return n;
 }
 
+/* ---------- wyróżnianie warstw: „pokaż tylko …”, reszta szara i ledwie widoczna ---------- */
+const FOCUS_KEEP={ all:null, segs:['segs'], nodes:['nodes'], rooms:['rooms'], co2:['rooms'] };
+function focusDim(group){ const keep=FOCUS_KEEP[focusMode]; return !!(keep && !keep.includes(group)); }
+/* g — kontekst 2D (rysunek albo eksport); zwraca true, gdy grupa jest przygaszona */
+function focusStart(g,group){
+  g.save();
+  if(focusDim(group)){ g.globalAlpha=0.2; if('filter' in g) g.filter='grayscale(1)'; return true; }
+  return false;
+}
+function focusEnd(g){ g.restore(); }
+function setFocusMode(m){ focusMode=m||'all'; draw(); }
+
 /* ---------- edycja obrysu: trafienia w uchwyty ---------- */
 function roomEditRoom(){ return roomEdit? F().rooms.find(x=>x.id===roomEdit) : null; }
 function vertexAt(w){
@@ -229,8 +243,28 @@ function edgeMidAt(w){
   }
   return -1;
 }
+/* przesunięcie wierzchołka: swobodnie albo z utrzymaniem kątów prostych
+   (sąsiednie punkty jadą po swoich osiach, więc prostokąt zostaje prostokątem) */
+function moveVertex(v,w){
+  const pts=v.room.pts, i=v.i, n=pts.length;
+  if(roomEditMode!=='ortho'||n<4){ pts[i].x=w.x; pts[i].y=w.y; return; }
+  const prev=pts[(i-1+n)%n], next=pts[(i+1)%n], cur=pts[i], EPS=0.75;
+  const prevVert=Math.abs(prev.x-cur.x)<EPS, prevHorz=Math.abs(prev.y-cur.y)<EPS;
+  const nextVert=Math.abs(next.x-cur.x)<EPS, nextHorz=Math.abs(next.y-cur.y)<EPS;
+  pts[i].x=w.x; pts[i].y=w.y;
+  if(prevVert) prev.x=w.x; if(prevHorz) prev.y=w.y;
+  if(nextVert) next.x=w.x; if(nextHorz) next.y=w.y;
+}
+/* czy obrys jest prostokątny (wszystkie krawędzie pionowe albo poziome) */
+function isRectilinear(pts){
+  if(!pts||pts.length<4) return false;
+  return pts.every((p,i)=>{ const q=pts[(i+1)%pts.length];
+    return Math.abs(p.x-q.x)<0.75 || Math.abs(p.y-q.y)<0.75; });
+}
+function setRoomEditMode(m){ roomEditMode=m; refreshSide(); draw(); }
 function setRoomEdit(id){
   roomEdit=id||null;
+  if(roomEdit){ const r=F().rooms.find(x=>x.id===roomEdit); roomEditMode = (r&&isRectilinear(r.pts))?'ortho':'free'; }
   setHint(roomEdit?'Edycja obrysu: przeciągaj białe uchwyty. „+” na krawędzi dodaje punkt, Alt+klik na punkcie usuwa. Esc kończy.':(TOOL_HINTS[tool]||''));
   refreshSide(); draw();
 }
@@ -367,7 +401,7 @@ cv.addEventListener('mousemove',e=>{
   const f=F();
   document.getElementById('stCoords').textContent = f.pxPerM? `${(w.x/f.pxPerM).toFixed(2)} m, ${(w.y/f.pxPerM).toFixed(2)} m` : `${w.x|0}, ${w.y|0} px`;
   if(mouse.panStart){ view.x=mouse.panStart.vx+(e.offsetX-mouse.panStart.mx); view.y=mouse.panStart.vy+(e.offsetY-mouse.panStart.my); draw(); return; }
-  if(mouse.dragVertex){ const v=mouse.dragVertex; v.room.pts[v.i].x=w.x; v.room.pts[v.i].y=w.y; recalc(); draw(); return; }
+  if(mouse.dragVertex){ moveVertex(mouse.dragVertex,w); recalc(); draw(); return; }
   if(mouse.dragNode){ mouse.dragNode.x=w.x; mouse.dragNode.y=w.y; if(mouse.dragNode.type==='person'||mouse.dragNode.type==='term_sup'||mouse.dragNode.type==='term_exh'){ const r=roomAt(w); mouse.dragNode.roomId=r?r.id:null; } recalc(); draw(); return; }
   if(draft) draw();
 });
@@ -514,15 +548,18 @@ function draw(){
   const lw=k=>k/view.z;
   // pomieszczenia
   const C=window.CALC||{};
+  focusStart(ctx,'rooms');
   f.rooms.forEach(r=>{
     const t=ROOM_TYPES[r.type]||{};
     const col = t.role==='exh'?'rgba(209,46,79,':'both'===t.role?'rgba(129,84,182,':t.role==='sup'?'rgba(45,98,190,':t.role==='excluded'?'rgba(142,144,150,':'rgba(142,144,150,';
     /* tło pomieszczenia: ten sam kolor rozbielony o połowę — jaśniejszy odcień,
        ale z dużo większym kryciem, więc przynależność pomieszczenia czyta się od razu */
-    const fillCol = t.role==='exh'?'rgba(255,178,194,':'both'===t.role?'rgba(218,194,245,':t.role==='sup'?'rgba(158,194,255,':'rgba(221,223,227,';
+    /* odcienie próbkowane z karteczek w referencji (jasny błękit / jasna łososiowa),
+       przy kryciu 0,62 dają na tle roboczym dokładnie ten kolor karteczki */
+    const fillCol = t.role==='exh'?'rgba(255,225,212,':'both'===t.role?'rgba(238,225,255,':t.role==='sup'?'rgba(212,227,255,':'rgba(233,234,238,';
     ctx.beginPath(); r.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath();
     const LIVEr=window.CTRL&&CTRL.connected&&CTRL.roomCO2&&CTRL.roomCO2[r.id]!=null, co2=LIVEr?CTRL.roomCO2[r.id]:null;
-    ctx.fillStyle=fillCol+(sel&&sel.kind==='room'&&sel.id===r.id?'0.92)':'0.75)'); ctx.fill();
+    ctx.fillStyle=fillCol+(sel&&sel.kind==='room'&&sel.id===r.id?'0.95)':'0.62)'); ctx.fill();
     if(LIVEr){ ctx.fillStyle=co2Color(co2, Math.min(0.55,Math.max(0,(co2-500)/1400))); ctx.fill(); }
     ctx.strokeStyle=col+'0.85)'; ctx.lineWidth=lw(sel&&sel.kind==='room'&&sel.id===r.id?3:1.6); ctx.stroke();
     if(!show2dLabels) return;
@@ -536,8 +573,10 @@ function draw(){
     if(LIVEr){ ctx.font=`700 ${lw(11)}px Outfit, Segoe UI`; ctx.fillStyle=co2Color(co2,1); ctx.fillText(`CO₂ ${fmt(co2)} ppm`, c.x, c.y+lw(15)); }
     else ctx.fillText(f.pxPerM?`${fmt(polyArea(r.pts)/f.pxPerM**2,1)} m²`:'', c.x, c.y+lw(2));
   });
+  focusEnd(ctx);
   // segmenty (trasy rozsunięte — nawiew i wywiew nie pokrywają się)
   const ROUTES=buildRoutes(f); window.__routes=ROUTES;
+  focusStart(ctx,'segs');
   f.segs.forEach(s=>{
     const pts=ROUTES[s.id]||segPoints(s); if(pts.length<2) return;
     const res=(C.segs||{})[s.id]||{};
@@ -565,6 +604,7 @@ function draw(){
       ctx.fillStyle='#1C1C1E'; ctx.fillText(label,m2.x,m2.y-lw(6));
     }
   });
+  focusEnd(ctx);
   // uchwyty edycji obrysu pomieszczenia
   if(roomEdit){
     const re=f.rooms.find(x=>x.id===roomEdit);
@@ -630,6 +670,7 @@ function draw(){
     ctx.strokeStyle='#956B23'; ctx.lineWidth=lw(2); ctx.stroke();
   }
   // węzły
+  focusStart(ctx,'nodes');
   f.nodes.forEach(n=>{
     const d=NODE_DEFS[n.type], r=d.r/view.z*Math.min(view.z,1.6);
     const isSel=sel&&sel.kind==='node'&&sel.id===n.id;
@@ -649,6 +690,7 @@ function draw(){
     const info=(window.CALC?.nodes||{})[n.id];
     if(info&&info.q&&show2dLabels){ const LIVE=window.CTRL&&CTRL.connected&&(n.type==='term_sup'||n.type==='term_exh'); const q=LIVE?(CTRL.live.nodes[n.id]??info.q):info.q; ctx.font=`600 ${lw(10)}px Outfit, Segoe UI`; ctx.fillStyle=LIVE?'#22815E':'#1C1C1E'; ctx.fillText(`${fmt(q)} m³/h`,n.x,n.y+r+lw(11)); }
   });
+  focusEnd(ctx);
   ctx.restore();
   if(window.drawLiveBadge) drawLiveBadge();
   document.getElementById('stScale').textContent = f.pxPerM?`skala: ${f.pxPerM.toFixed(1)} px/m (1:${fmt(100/ (f.pxPerM/37.8) ,0)}~)`:'skala: NIESKALIBROWANA — użyj narzędzia Kalibracja';
@@ -1180,7 +1222,10 @@ function renderProps(){
     ${(()=>{ const q=axisRect(r.pts); if(!q||!f.pxPerM) return '';
       return `<div class="field"><label>Szerokość [m]</label><input type="number" id="prBw" step="0.05" min="0.2" value="${((q.x1-q.x0)/f.pxPerM).toFixed(2)}"></div>
               <div class="field"><label>Głębokość [m]</label><input type="number" id="prBh" step="0.05" min="0.2" value="${((q.y1-q.y0)/f.pxPerM).toFixed(2)}"></div>`; })()}
-    ${roomEdit===r.id?`<p class="note">Przeciągaj białe uchwyty, aby zmienić kształt. „+” na krawędzi dodaje punkt, <b>Alt + klik</b> na punkcie usuwa go. Esc kończy edycję.</p>`:''}
+    ${roomEdit===r.id?`<div class="field"><label>Tryb edycji</label><span style="display:flex;gap:6px">
+      <button class="btn ${roomEditMode==='ortho'?'acc':''}" id="prMoOrtho" title="Sąsiednie punkty jadą po swoich osiach — prostokąt zostaje prostokątem">Kąty proste</button>
+      <button class="btn ${roomEditMode==='free'?'acc':''}" id="prMoFree" title="Każdy punkt idzie dowolnie">Swobodnie</button></span></div>
+    <p class="note">Przeciągaj białe uchwyty, aby zmienić kształt. „+” na krawędzi dodaje punkt, <b>Alt + klik</b> na punkcie usuwa go. Esc kończy edycję.${roomEditMode==='ortho'?' W trybie kątów prostych ruch narożnika przenosi też sąsiednie punkty.':''}</p>`:''}
     ${(t.role==='sup'||t.role==='both')?((window.CALC||{}).personsFromPlan?`<div class="field"><label>Mieszkańcy w pomieszczeniu (z rzutu)</label><b>${(CALC.occByRoom||{})[r.id]||0}</b></div>`:`<div class="field"><label>Liczba osób (waga nawiewu)</label><input type="number" id="prOs" min="0" step="1" value="${r.osoby??t.osoby??1}"></div>`):''}
     ${(t.role==='exh'||t.role==='both')?`<div class="field"><label>Wywiew — nadpisz [m³/h]</label><input type="number" id="prFlow" placeholder="auto" value="${r.flowOverride??''}"></div>`:''}
     <div class="field"><label>Powierzchnia [m²] (z rzutu)</label><input type="number" id="prA" step="0.01" placeholder="${fmt((window.CALC.rooms[r.id]||{}).area,2)}" value="${r.areaOverride??''}"></div>
@@ -1191,6 +1236,9 @@ function renderProps(){
     box.querySelector('#prName').addEventListener('change',e=>{snapshot();r.name=e.target.value;refreshAll();});
     box.querySelector('#prType').addEventListener('change',e=>{snapshot();r.type=e.target.value;refreshAll();});
     box.querySelector('#prEdit').addEventListener('click',()=>{ setTool('select'); setRoomEdit(roomEdit===r.id?null:r.id); });
+    const moO=box.querySelector('#prMoOrtho'), moF=box.querySelector('#prMoFree');
+    if(moO) moO.addEventListener('click',()=>setRoomEditMode('ortho'));
+    if(moF) moF.addEventListener('click',()=>setRoomEditMode('free'));
     const bw=box.querySelector('#prBw'), bh=box.querySelector('#prBh');
     /* wymiary prostokąta: skalowanie od lewego górnego narożnika */
     const resize=(newW,newH)=>{

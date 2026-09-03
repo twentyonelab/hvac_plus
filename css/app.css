@@ -188,6 +188,9 @@ svg.i{width:16px;height:16px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-
 .field input[type=number],.field input[type=text],.field select,dialog input[type=number],dialog input[type=text]{height:30px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:0 10px;font:var(--type-body);font-size:13px;width:132px;background:var(--surface-card);color:var(--text-primary);outline:none;transition:var(--transition-control)}
 .field input:focus,.field select:focus,dialog input:focus{border-color:var(--mint-500);box-shadow:0 0 0 3px var(--mint-100)}
 .field input[type=range],dialog input[type=range]{width:132px;accent-color:var(--gray-900)}
+.field select.wide{width:auto;min-width:150px;max-width:210px}
+.field select:disabled,.field input:disabled{opacity:.5;cursor:not-allowed;background:var(--surface-sunken)}
+.field label .pill{margin-left:6px;font-weight:500}
 input[type=checkbox]{width:18px;height:18px;accent-color:var(--mint-500);cursor:pointer}
 .btn{display:inline-flex;align-items:center;gap:6px;height:30px;border:none;background:var(--surface-card);padding:0 14px;border-radius:var(--radius-pill);cursor:pointer;font:var(--type-ui);font-size:13px;color:var(--text-primary);box-shadow:var(--shadow-card);margin:2px 4px 2px 0;transition:var(--transition-control)}
 .btn:hover{box-shadow:var(--shadow-raised)}
@@ -375,3 +378,5 @@ body.dnd,body.dnd *{cursor:grabbing !important}
 
 /* podpowiedź nie może wchodzić pod nakładki */
 #hint{max-width:44%}
+.vbtn.on{background:var(--accent-secondary)}
+.vbtn.on:hover{background:var(--lavender-200)}

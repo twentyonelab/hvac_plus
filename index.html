@@ -53,6 +53,7 @@
   <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-rect" viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2"/><path d="M20 16v2a2 2 0 0 1-2 2h-2"/><rect x="4" y="4" width="16" height="16" rx="2" opacity=".35"/></symbol>
+  <symbol id="i-eye2" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-wind" viewBox="0 0 24 24"><path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/></symbol>
 </svg>
 
@@ -197,6 +198,7 @@
           <div class="vgroup">
             <button type="button" class="vbtn" id="camBtn" data-pop="camPop" title="Widok i kamera" aria-label="Widok i kamera"><svg class="i"><use href="#i-box"/></svg></button>
             <button type="button" class="vbtn" id="layBtn" data-pop="layPop" title="Warstwy" aria-label="Warstwy"><svg class="i"><use href="#i-layers"/></svg></button>
+            <button type="button" class="vbtn" id="focusBtn" data-pop="focusPop" title="Styl wyświetlania — wyróżnij jedną warstwę" aria-label="Styl wyświetlania"><svg class="i"><use href="#i-eye2"/></svg></button>
           </div>
           <div class="vgroup">
             <button type="button" class="vbtn" data-tool="select" title="Wybierz / edytuj" aria-label="Wybierz / edytuj"><svg class="i"><use href="#i-pointer"/></svg></button>
@@ -216,6 +218,16 @@
             <h5>Eksport</h5>
             <div class="vrow"><button class="vp" id="camPng">Pobierz obraz PNG</button></div>
             <p class="vnote">Widok 3D: przeciągnij, aby obrócić bryłę wokół jej środka · kółko — zoom · Shift lub prawy przycisk — przesuwanie.</p>
+          </div>
+
+          <div class="vpop" id="focusPop" hidden>
+            <h5>Styl wyświetlania</h5>
+            <div class="vrow"><button class="vp" data-focus="all">Wszystko</button></div>
+            <div class="vrow"><button class="vp" data-focus="segs">Tylko kanały i przewody</button></div>
+            <div class="vrow"><button class="vp" data-focus="nodes">Tylko urządzenia</button></div>
+            <div class="vrow"><button class="vp" data-focus="rooms">Tylko pomieszczenia</button></div>
+            <div class="vrow"><button class="vp" data-focus="co2">Tylko CO₂</button></div>
+            <p class="vnote" id="focusNote">Wyróżniona warstwa zostaje w pełnym kolorze, reszta rysunku staje się szara i ledwie widoczna (20%). Działa tak samo w rzucie 2D i w widoku 3D.</p>
           </div>
 
           <div class="vpop" id="layPop" hidden>
@@ -313,6 +325,7 @@
 <script src="js/engine-3d.js"></script>
 <script src="js/engine-ctrl.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/weather.js"></script>
 <script src="js/dnd.js"></script>
 </body>
 </html>

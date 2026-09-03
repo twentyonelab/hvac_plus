@@ -179,6 +179,7 @@ function render3D(g,W,H,cam,opts){
       }
     }
     // ---- pomieszczenia: podłoga + ściany szkieletowe ----
+    focusStart(g,'rooms');
     if(v3.showRooms){
       const rooms=f.rooms.map(r=>{ const c=polyCentroid(r.pts), w=v3W(fl,c); return {r,n:v3P(w.X,w.Y,fl.z0,cam).n}; }).sort((a,b)=>a.n-b.n);
       rooms.forEach(({r})=>{
@@ -216,10 +217,12 @@ function render3D(g,W,H,cam,opts){
         }
       });
     }
+    focusEnd(g);
     // ---- przewody na poziomie zd ----
     const R3=buildRoutes(f);
     const segs=f.segs.map(s=>{ const pts=R3[s.id]||[]; if(pts.length<2) return null;
       const mid=pts[Math.floor(pts.length/2)], w=v3W(fl,mid); return {s,pts,n:v3P(w.X,w.Y,fl.zd,cam).n}; }).filter(Boolean).sort((a,b)=>a.n-b.n);
+    focusStart(g,'segs');
     segs.forEach(({s,pts})=>{
       const res=(C.segs||{})[s.id]||{};
       const col= s.kind==='flx' ? (res.side==='sup'?V3_COL.sup:res.side==='exh'?V3_COL.exh:res.side==='mix'?V3_COL.mix:V3_COL.flxNone)
@@ -247,7 +250,9 @@ function render3D(g,W,H,cam,opts){
         g.fillStyle='rgba(255,255,255,.85)'; g.fillRect(m.x-tw/2-3,m.y-17,tw+6,13); g.fillStyle='#1C1C1E'; g.fillText(label,m.x,m.y-7);
       }
     });
+    focusEnd(g);
     // ---- piony (do wyższej kondygnacji) ----
+    focusStart(g,'nodes');
     f.nodes.filter(n=>n.type==='riser').forEach(n=>{
       const up=model.floors.slice(fl.fi+1).find(o=>o.f.nodes.some(k=>k.type==='riser'&&(k.num||1)===(n.num||1)));
       const w=v3W(fl,n); const a=v3P(w.X,w.Y,fl.zd,cam);
@@ -259,8 +264,10 @@ function render3D(g,W,H,cam,opts){
       g.fillStyle='#fff'; g.font=font(700,Math.max(8,Math.min(11,0.12*cam.scale))); g.textAlign='center'; g.textBaseline='middle'; g.fillText('P'+(n.num||1),a.x,a.y); g.textBaseline='alphabetic';
       v3.hits.push({x:a.x,y:a.y,n,fl});
     });
+    focusEnd(g);
     // ---- węzły (sortowane po bliskości) ----
     const nodes=f.nodes.filter(n=>n.type!=='riser').map(n=>{ const w=v3W(fl,n); return {n,w,nn:v3P(w.X,w.Y,fl.zd,cam).n}; }).sort((a,b)=>a.nn-b.nn);
+    focusStart(g,'nodes');
     nodes.forEach(({n,w})=>{
       const info=(C.nodes||{})[n.id]||{};
       const isSel=sel&&sel.kind==='node'&&sel.id===n.id&&fl.fi===state.activeFloor;
@@ -301,6 +308,7 @@ function render3D(g,W,H,cam,opts){
       }
       if(top) v3.hits.push({x:top.x,y:top.y,n,fl});
     });
+    focusEnd(g);
     // ---- etykieta kondygnacji ----
     if(v3.showLabels){
       // etykieta przy skrajnie lewym narożniku obrysu kondygnacji (na poziomie stropu)

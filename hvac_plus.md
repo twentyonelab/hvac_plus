@@ -10,7 +10,8 @@ Aplikacja webowa 21 zmysłów do projektowania wentylacji mechanicznej z odzyski
 2. Pomieszczenia: prostokąt z dwóch narożników albo nieregularny obrys punkt po punkcie, rozpoznawanie automatyczne z rysunku (maska ścian + OCR), edycja obrysu po zaznaczeniu (uchwyty wierzchołków, wymiary liczbowe), mieszkańcy na rzucie.
 3. Urządzenia i sieć: centrala, rozdzielacze, anemostaty, czerpnia, wyrzutnia, piony, kanały spiro i przewody FLX. Urządzenia wstawia się **przeciągnięciem karty** z szyny narzędzi na rzut albo kliknięciem karty i kliknięciem na rzucie.
 4. Obliczenia: bilans powietrza (PN-83/B-03430, WT §147–155), strefy dzień/noc, wymiarowanie przewodów, spręż, dobór centrali HRU, zestawienie materiałów, lista kontrolna zgodności.
-5. Widok 3D (aksonometria), symulator sterowania (Modbus / GATE), raport do wydruku z arkuszami rysunkowymi.
+5. Widok 3D (aksonometria), symulator sterowania (Modbus / GATE) z pogodą z Open-Meteo jako warunkami zewnętrznymi, raport do wydruku z arkuszami rysunkowymi.
+6. Styl wyświetlania („oczko”): wyróżnienie jednej warstwy — tylko kanały, tylko urządzenia, tylko pomieszczenia, tylko CO₂ — reszta rysunku szara i przy 20% krycia. Działa identycznie w 2D i 3D.
 
 ## Struktura
 
@@ -22,6 +23,7 @@ js/engine-3d.js       aksonometria instalacji
 js/engine-ctrl.js     wirtualne sterowanie centralą (cyfrowy bliźniak)
 js/ui.js              nakładka UI: zwijane grupy narzędzi, pigułki kondygnacji, KPI, tytuł sceny
 js/dnd.js             przeciąganie kart urządzeń na rzut (Pointer Events, podgląd na canvasie)
+js/weather.js         dane pogodowe z Open-Meteo (kontrakt WeatherReading, cache, backoff)
 assets/fonts          Outfit (variable, latin + latin-ext)
 assets/icons          ikony Lucide z systemu 21 Apps
 assets/logo-21zmyslow.svg, assets/sygnet-21zmyslow.svg   logo firmowe
@@ -48,6 +50,12 @@ Sterowanie rysunkiem siedzi na samym rysunku, podzielone według pytania „co r
 
 Lewa szyna zostaje tym, czym powinna być — katalogiem tego, co wstawiamy w projekt: podkład, pomieszczenia, automatyzacja, urządzenia (karty do przeciągania), przewody. Panel prawy to wyłącznie dane projektu i obliczenia; zakładka „3D" zniknęła, bo ustawienia widoku należą do widoku.
 
+## Pogoda (Open-Meteo)
+
+Moduł `js/weather.js` pobiera bieżące warunki z Open-Meteo (bez klucza i rejestracji) i oddaje jeden odczyt zgodny z kontraktem `WeatherReading`. Pilnuje: brak pomiaru to `null` (nigdy zero), pamięć podręczna 10 minut, przerwa 60 s po błędzie, jedna obietnica w locie na wielu odbiorców, przy błędzie zwrot ostatniego znanego odczytu, limit czasu przez `AbortSignal.timeout`, wyłącznik `allowExternal`. Współrzędne pochodzą z geokodowania nazwy miejsca (Open-Meteo Geocoding), zaokrąglone do czterech miejsc.
+
+**Odstępstwo od specyfikacji:** aplikacja jest statyczna (GitHub Pages), więc nie ma serwera, na którym mógłby stanąć punkt `GET /api/weather`. Odpowiednikiem jest `HvacWeather.read()` z tą samą semantyką — zwraca `WeatherReading` albo `null`, gdzie `null` znaczy „nie ma pogody z żadnego źródła". Postawienie prawdziwego punktu API wymagałoby backendu (np. funkcji brzegowej) — do zrobienia, gdy aplikacja dostanie serwer.
+
 ## Decyzje architektoniczne
 
 - **Silnik obliczeniowy bez zmian funkcjonalnych.** Skórka i układ są nowe, logika i format pliku projektu (`*.hvacplus.json`) pozostają zgodne z poprzednią wersją HVAC+ ALNOR.
@@ -58,6 +66,7 @@ Lewa szyna zostaje tym, czym powinna być — katalogiem tego, co wstawiamy w pr
 - **Obrót 3D wokół środka bryły.** `v3Orbit()` zmienia kąty i koryguje przesunięcie tak, by środek modelu został w tym samym punkcie ekranu — bryła nie ucieka poza kadr przy obracaniu.
 - **Zmiana rozmiaru podkładu wypala się w obrazie.** Suwak daje podgląd (`bgPrevK` tylko przy rysowaniu), a „Zastosuj" przerysowuje podkład do nowego rozmiaru i zapisuje jako obraz. Dzięki temu rozpoznawanie pomieszczeń, maska ścian i widok 3D pracują na realnych pikselach i nie wymagają własnej transformacji. Skala rysunku (px/m) nie zmienia się — obrysy i instalacja zostają na miejscu, żeby dało się dopasować podkład do nich.
 - **Nakładki na rysunku nie przechwytują kliknięć.** Kontenery mają `pointer-events:none`, tylko same kontrolki je łapią; `fitView()` zostawia marginesy pod nakładki, żeby rysunek nie chował się pod przyciskami.
+- **Wyróżnianie warstw jako stan rysowania, nie druga scena.** `focusStart(ctx, grupa)` / `focusEnd(ctx)` owijają pętle rysujące (pomieszczenia, przewody, urządzenia) w 2D i 3D; przygaszenie to `globalAlpha 0.2` plus `filter: grayscale(1)`. Jedna definicja `FOCUS_KEEP` rządzi obydwoma widokami, więc nie mogą się rozjechać.
 - **Kolory rysunku to warstwa semantyczna, nie dekoracja.** Zmiana palety = zmiana wartości w jednym miejscu (zmienne CSS + stałe silnika), a nie przy każdym `fillStyle`.
 - **UI podmienia globalne funkcje renderujące** (`renderFloorbar`, `refreshAll`, `setTool`) zamiast edytować silnik. Aktualizacja silnika = podmiana plików `engine-*.js`.
 

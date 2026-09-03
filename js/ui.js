@@ -151,6 +151,25 @@
     a.click(); draw();
   });
 
+  /* ---------- styl wyświetlania: wyróżnienie jednej warstwy ---------- */
+  $('#focusPop').addEventListener('click',e=>{
+    const b=e.target.closest('[data-focus]'); if(!b) return;
+    setFocusMode(b.dataset.focus);
+    syncFocus();
+  });
+  function syncFocus(){
+    const m=(typeof focusMode==='string')?focusMode:'all';
+    document.querySelectorAll('#focusPop [data-focus]').forEach(b=>b.classList.toggle('active',b.dataset.focus===m));
+    $('#focusBtn').classList.toggle('on',m!=='all');
+    const note=$('#focusNote');
+    if(m==='co2'){
+      const live=window.CTRL&&CTRL.connected;
+      note.textContent = live
+        ? 'Pomieszczenia barwione stężeniem CO₂ z symulacji centrali; instalacja przygaszona.'
+        : 'Podgląd CO₂ wymaga połączenia w zakładce „Sterowanie” — bez niego pomieszczenia mają barwy typów.';
+    } else note.textContent='Wyróżniona warstwa zostaje w pełnym kolorze, reszta rysunku staje się szara i ledwie widoczna (20%). Działa tak samo w rzucie 2D i w widoku 3D.';
+  }
+
   /* ---------- warstwy ---------- */
   document.querySelectorAll('#layPop [data-v3]').forEach(cb=>{
     cb.checked=!!v3[cb.dataset.v3];
@@ -210,5 +229,5 @@
   if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ try{ draw(); }catch(e){} });
 
   /* ---------- start ---------- */
-  renderFloorbar(); updateKpis(); syncMode(); syncOrbit(); setTool(tool);
+  renderFloorbar(); updateKpis(); syncMode(); syncOrbit(); setTool(tool); syncFocus();
 })();

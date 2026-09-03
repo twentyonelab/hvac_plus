@@ -182,8 +182,17 @@ function renderSter(el){
   el.innerHTML=`
   <h3>Sterowanie centralą (wirtualne połączenie)</h3>
   <p class="note">Cyfrowy bliźniak sterowania 21LAB: aplikacja <b>HRQ-PremAIR-GATE</b> (tryby Away / Home / Party / Boost / Auto, czujniki CO₂ i RH) oraz moduł <b>HRQ-Modbus</b> (RTU RS485, 19200 8E1, slave 2, funkcje 03/16). Na razie odpowiada symulator — po podłączeniu bramki wystarczy podmienić warstwę transportu.</p>
+  <h4>Pogoda (Open-Meteo)</h4>
+  <p class="note">Darmowa służba bez klucza. Odczyt służy jako warunki zewnętrzne dla symulacji centrali; brak pomiaru pokazujemy jako „—”, nigdy jako zero.</p>
+  <div class="field"><label>Lokalizacja</label><input type="text" id="wtPlace" placeholder="np. Kraków" value="${esc(state.weatherPlace||'')}"></div>
+  <div id="wtBox">${renderWeatherBox()}</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">
+    <button class="btn" id="wtGet">Pobierz pogodę</button>
+    <button class="btn" id="wtUse">Użyj jako warunki zewnętrzne</button>
+  </div>
+
   <h4>Połączenie</h4>
-  <div class="field"><label>Łącze</label><select id="ctLink" ${on?'disabled':''}>
+  <div class="field"><label>Łącze${on?' <span class="pill" style="background:var(--surface-sunken);color:var(--text-secondary)">rozłącz, aby zmienić</span>':''}</label><select id="ctLink" class="wide" ${on?'disabled':''}>
     <option value="virtual" ${CTRL.link==='virtual'?'selected':''}>Symulator centrali (wirtualnie)</option>
     <option value="modbus" ${CTRL.link==='modbus'?'selected':''}>HRQ-Modbus przez bramkę Modbus-TCP</option>
     <option value="gate" ${CTRL.link==='gate'?'selected':''}>HRQ-PremAIR-GATE (API chmury — brak publicznej dokumentacji)</option></select></div>
@@ -198,6 +207,19 @@ function renderSter(el){
   <h4>Log komunikacji</h4>
   <div id="ctLog" style="font:10.5px/1.4 Consolas,monospace;background:#1C1C1E;color:#A9EBC9;border-radius:8px;padding:8px;max-height:150px;overflow:auto;white-space:pre-wrap">${CTRL.log.map(esc).join('<br>')}</div>
   <details class="src" style="margin-top:8px"><summary>Źródła (dokumentacja producenta central)</summary>Instrukcja „Moduł komunikacji Modbus HRQ-Modbus” (alnor.com.pl, rejestry 41000–49062); artykuł „Sterowanie rekuperacją” (HRQ-PremAIR-BUT-LM11/LM04, SENS-CO2/RH, GATE); instrukcja HRU-MinistAIR. Model termiczny i czujników — symulacja własna.</details>`;
+  const wp=el.querySelector('#wtPlace');
+  if(wp) wp.addEventListener('change',e=>{ state.weatherPlace=e.target.value.trim(); });
+  const wg=el.querySelector('#wtGet');
+  if(wg) wg.addEventListener('click',()=>weatherFetch(true));
+  const wu=el.querySelector('#wtUse');
+  if(wu) wu.addEventListener('click',()=>{
+    const r=window.HvacWeather&&HvacWeather.last;
+    if(!r||r.tempC==null){ toast('Brak odczytu temperatury zewnętrznej — najpierw pobierz pogodę.'); return; }
+    CTRL.tOut=r.tempC;
+    ctrlLog('i',`warunki zewnętrzne z Open-Meteo: ${r.tempC.toFixed(1)} °C (${r.place})`);
+    ctrlRefreshPane(); refreshSide();
+    toast(`Temperatura zewnętrzna ustawiona na ${r.tempC.toFixed(1)} °C wg pogody dla ${r.place}.`);
+  });
   const lk=el.querySelector('#ctLink'); if(lk) lk.addEventListener('change',e=>{ CTRL.link=e.target.value; renderSter(el); });
   const hs=el.querySelector('#ctHost'); if(hs) hs.addEventListener('change',e=>{ const [h,p]=e.target.value.split(':'); CTRL.host=h||CTRL.host; CTRL.port=+p||502; });
   const sl=el.querySelector('#ctSlave'); if(sl) sl.addEventListener('change',e=>{ CTRL.slave=+e.target.value||2; });
@@ -205,7 +227,36 @@ function renderSter(el){
   const db=el.querySelector('#ctDisc'); if(db) db.addEventListener('click',()=>{ ctrlDisconnect(); renderSter(el); });
   el.querySelector('#ctBom').addEventListener('change',e=>{ CTRL.bomOn=e.target.checked; refreshAll(); });
   bindSterLive(el);
+  /* po wejściu w zakładkę: jeśli odczyt jest nieaktualny, pobierz w tle
+     (moduł sam pilnuje pamięci podręcznej i przerwy po błędzie) */
+  if(window.HvacWeather && (state.weatherPlace||'').trim() && HvacWeather.stale) weatherFetch(false);
 }
+/* ---------- pogoda: kafelek odczytu i pobieranie ---------- */
+function renderWeatherBox(){
+  const W=window.HvacWeather;
+  if(!W) return '<p class="note">Moduł pogody nie został wczytany.</p>';
+  const r=W.last;
+  if(!r) return `<p class="note">${W.lastError?`Nie udało się pobrać pogody: ${esc(W.lastError)}. Ponowna próba po minucie.`:'Brak odczytu — podaj lokalizację i kliknij „Pobierz pogodę”.'}</p>`;
+  const v=(x,u,d=0)=> x==null? '—' : `${fmt(x,d)} ${u}`;
+  const wiek=W.ageMinutes();
+  return `<div class="kpi"><b>${v(r.tempC,'°C',1)}</b><span>temperatura zewnętrzna</span></div>
+  <div class="kpi"><b>${v(r.humidity,'%')}</b><span>wilgotność</span></div>
+  <div class="kpi"><b>${v(r.windKmh,'km/h',1)}</b><span>wiatr</span></div>
+  <div class="kpi"><b>${v(r.radiationWm2,'W/m²')}</b><span>promieniowanie</span></div>
+  <div class="kpi"><b>${v(r.cloudCover,'%')}</b><span>zachmurzenie</span></div>
+  <p class="note">${esc(r.text||'—')} · ${esc(r.place)} · odczyt ${esc(r.ts)}${wiek!=null?` (${wiek} min temu)`:''}${W.stale?' <span class="pill warn">nieaktualny</span>':''}${W.lastError?` · <span class="pill err">ostatnia próba nieudana</span>`:''}</p>`;
+}
+function weatherFetch(force){
+  const W=window.HvacWeather; if(!W) return;
+  const place=(state.weatherPlace||'').trim();
+  if(!place){ toast('Podaj lokalizację (np. Kraków), żeby pobrać pogodę.'); return; }
+  const box=document.getElementById('wtBox');
+  if(box&&force) box.innerHTML='<p class="note">Pobieranie…</p>';
+  W.read({place, force:!!force}).then(()=>{
+    const b=document.getElementById('wtBox'); if(b) b.innerHTML=renderWeatherBox();
+  });
+}
+
 function renderSterLive(){
   const C=window.CALC||{}, B=C.balance||{}, k=ctrlFactor(), m=CTRL_MODES[CTRL.mode];
   const day=CTRL.zoneMode==='auto'?ctrlIsDay():CTRL.zoneMode==='day';
