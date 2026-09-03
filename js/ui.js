@@ -92,12 +92,17 @@
   function syncWeatherCard(){
     const W=window.HvacWeather, card=$('#wxCard');
     if(!card) return;
-    const r=W&&W.last;
+    let r=W&&W.last, simW=null;
+    /* w symulacji doby bez prawdziwego odczytu kafelek pokazuje dane
+       demonstracyjne z przebiegu symulacji — wyraźnie podpisane */
+    if(!r && window.__simWeather) simW=window.__simWeather();
+    if(simW) r=simW;
     const v=(x,u,d=0)=> x==null? '—' : `${fmt(x,d)} ${u}`;
     card.hidden=false;
+    card.classList.toggle('demo',!!simW);
     if(!r){
       /* brak odczytu: kafelek zostaje na swoim miejscu i mówi, czego brakuje */
-      card.classList.add('empty','min');
+      card.classList.add('empty','min'); card.dataset.autoMin='1';
       $('#wxTemp').textContent='Pogoda';
       $('#wxDesc').textContent=(state.weatherPlace||'').trim()
         ? (W&&W.lastError? 'próba nieudana — ponowi się' : 'pobieranie…')
@@ -106,13 +111,17 @@
       return;
     }
     card.classList.remove('empty');
+    if(card.dataset.autoMin){ card.classList.remove('min'); delete card.dataset.autoMin; }
     $('#wxTemp').textContent = r.tempC==null? '—' : `${fmt(r.tempC,1)} °C`;
     $('#wxDesc').textContent = `zewnętrznie · ${r.text||'—'}`;
     $('#wxHum').textContent  = v(r.humidity,'%');
     $('#wxWind').textContent = v(r.windKmh,'km/h',0);
     $('#wxRad').textContent  = v(r.radiationWm2,'W/m²');
     $('#wxPlace').textContent= r.place||'—';
-    card.title = `Odczyt ${r.ts}${W.ageMinutes()!=null?` (${W.ageMinutes()} min temu)`:''} · Open-Meteo`;
+    const src=$('#wxSrc'); if(src) src.textContent = simW? 'symulacja' : 'Open-Meteo';
+    card.title = simW
+      ? 'Dane pogodowe z symulacji doby — przykładowe, nie z pomiaru. Podaj lokalizację w zakładce Sterowanie, aby wczytać prawdziwą pogodę.'
+      : `Odczyt ${r.ts}${W.ageMinutes()!=null?` (${W.ageMinutes()} min temu)`:''} · Open-Meteo`;
   }
   $('#wxCard').addEventListener('click',()=>{
     const card=$('#wxCard');
@@ -224,10 +233,10 @@
     $('#focusBtn').classList.toggle('on',m!=='all');
     const note=$('#focusNote');
     if(m==='co2'){
-      const live=window.CTRL&&CTRL.connected;
-      note.textContent = live
-        ? 'Pomieszczenia barwione stężeniem CO₂ z symulacji centrali; instalacja przygaszona.'
-        : 'Podgląd CO₂ wymaga połączenia w zakładce „Sterowanie” — bez niego pomieszczenia mają barwy typów.';
+      const src = (window.CTRL&&CTRL.connected) ? 'sterowania' : (window.__simCO2? 'symulacji doby' : null);
+      note.textContent = src
+        ? `Pomieszczenia barwione stężeniem CO₂ z ${src}; reszta rysunku przygaszona.`
+        : 'Nie ma danych CO₂ — cały rysunek zostaje szary. Dane pojawią się po włączeniu symulacji doby albo po połączeniu w zakładce „Sterowanie”.';
     } else note.textContent='Wyróżniona warstwa zostaje w pełnym kolorze, reszta rysunku staje się szara i ledwie widoczna (20%). Działa tak samo w rzucie 2D i w widoku 3D.';
   }
 

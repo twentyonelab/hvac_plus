@@ -39,6 +39,51 @@
   /* wysokość słońca zastępczo: doba równonocy, wschód ~6:00, zachód ~19:00 */
   const sunAt  = min => clamp(Math.sin((min/60-6.5)/13*Math.PI), 0, 1);
 
+  /* ---------- fikcyjna pogoda symulacji ----------
+     Gdy nie ma prawdziwego odczytu z Open-Meteo, symulacja pokazuje przykładowy
+     przebieg doby: temperatura, zachmurzenie, wiatr i nasłonecznienie liczone
+     z pory dnia. Jest to wyraźnie oznaczone jako dane przykładowe. */
+  function simWeatherAt(min, base){
+    const sun = sunAt(min);
+    const cloud = base.cloud!=null ? base.cloud : clamp(52+34*Math.sin((min/1440)*2*Math.PI+1.2),0,100);
+    const radMax = base.rad!=null ? Math.max(160, base.rad) : 620;
+    const desc = sun<0.02 ? (cloud>60?'noc, zachmurzenie duże':'noc pogodna')
+               : cloud>70 ? 'zachmurzenie duże' : cloud>35 ? 'zachmurzenie umiarkowane' : 'słonecznie';
+    return {
+      tempC: toutAt(min, base),
+      text: desc,
+      humidity: Math.round(clamp(90 - 26*sun + (cloud-50)*0.10, 34, 99)),
+      windKmh: Math.round(clamp(6 + 9*sun + 5*Math.sin(min/190), 1, 34)),
+      radiationWm2: Math.round(sun*radMax*(1-0.55*cloud/100)),
+      cloudCover: Math.round(cloud),
+      place: base.place || 'dane przykładowe',   // podpis w kafelku pogody
+      sim: true
+    };
+  }
+  window.__simWeather = () => S.open ? simWeatherAt(S.min, weatherBase()) : null;
+
+  /* ---------- fikcyjne CO₂ w pomieszczeniach ----------
+     Bilans ustalony: człowiek wydziela ~20 l CO₂/h, więc przyrost nad tłem
+     to 20·n·1000 / V_pom [m³/h]. Tło zewnętrzne 430 ppm. Rozkład osób
+     w pomieszczeniach bierzemy z rzutu, przeskalowany profilem obłożenia. */
+  function simCO2At(min, ctxData){
+    const occ = occupancyAt(min, ctxData.persons);
+    const share = ctxData.persons ? occ.n/ctxData.persons : 0;
+    const C = window.CALC||{}, out = {};
+    (state.floors||[]).forEach(f=>{
+      const inRoom = {};
+      f.nodes.forEach(n=>{ if(n.type==='person'&&n.roomId) inRoom[n.roomId]=(inRoom[n.roomId]||0)+1; });
+      f.rooms.forEach(r=>{
+        const info=(C.rooms||{})[r.id]||{};
+        const flow=Math.max(8,(info.sup||0)*occ.k || (info.exh||0)*occ.k || 12);
+        const n=(inRoom[r.id]||0)*share;
+        const gen = 20*n;                                    // l/h
+        out[r.id] = Math.round(430 + gen*1000/flow);
+      });
+    });
+    return out;
+  }
+
   /* ---------- obłożenie i tryb centrali ---------- */
   function occupancyAt(min, persons){
     const h = min/60;
@@ -176,6 +221,17 @@
     $('#simDay').textContent  = `${f1(sum.eZ+sum.eFan,'',1)} / ${f1(sum.save,'kWh',1)}`;
     $('#simOcc').textContent  = `${p.occ.n} os. · ${p.occ.tryb}`;
     $('#simOcc').title        = `strumień bieżący ${Math.round(p.v)} m³/h`;
+    /* fikcyjne CO₂ — widoczne na rysunku i w stylu wyświetlania „tylko CO₂” */
+    window.__simCO2 = simCO2At(S.min, sum.ctx);
+    const co2max = Math.max(430, ...Object.values(window.__simCO2));
+    $('#simCo2').textContent  = `${fmt(co2max)} ppm`;
+    $('#simCo2').title        = 'CO₂ liczone z obłożenia i bieżącego strumienia — dane przykładowe';
+    /* pora dnia: ikona słońca / księżyca */
+    const night = p.sun<=0.02, dn=$('#simDN');
+    if(dn){ dn.classList.toggle('night',night);
+      dn.innerHTML = `<svg class="i"><use href="#i-${night?'moon':'sun2'}"/></svg>`;
+      dn.title = night? 'Noc — tryb obniżony' : 'Dzień'; }
+    if(window.syncWeatherCard) syncWeatherCard();
     drawChart();
     if(window.draw) draw();
   }
@@ -200,6 +256,21 @@
     ctx.restore();
   };
 
+  /* szarość rysunku w symulacji — z wyjątkiem stylu „tylko CO₂”, gdzie barwy
+     stężenia są całą treścią obrazu */
+  function syncGray(){
+    const co2View = (typeof focusMode!=='undefined') && focusMode==='co2';
+    cv.classList.toggle('sim-gray', S.open && !co2View);
+  }
+  window.__simSyncGray = syncGray;
+
+  /* wysokość arkusza → zmienna CSS, żeby kafelek pogody i legenda ustawiły się nad nim */
+  function measureSheet(){
+    const sh=$('#simSheet');
+    const h = (S.open && sh) ? Math.round(sh.getBoundingClientRect().height) : 0;
+    document.documentElement.style.setProperty('--sim-h', h+'px');
+  }
+
   /* ---------- pętla odtwarzania ---------- */
   function tick(ts){
     S.raf=0; if(!S.playing) return;
@@ -220,8 +291,10 @@
     $('#simSheet').hidden=!on;
     $('#simBtn').classList.toggle('on',on);
     document.body.classList.toggle('sim-open',on);
-    cv.classList.toggle('sim-gray',on);             // na razie cały rysunek w szarości
-    if(!on){ play(false); fade.clear(); } else { cache.key=''; refresh(); }
+    syncGray();
+    if(!on){ play(false); fade.clear(); window.__simCO2=null; }
+    else { cache.key=''; refresh(); }
+    measureSheet();
     if(window.syncWeatherCard) syncWeatherCard();
     if(window.draw) draw();
   }
@@ -249,7 +322,7 @@
     if(e.key==='Escape' && S.open) open(false);
     if(e.key===' ' && S.open && e.target===document.body){ e.preventDefault(); play(!S.playing); }
   });
-  window.addEventListener('resize',()=>{ if(S.open) drawChart(); });
+  window.addEventListener('resize',()=>{ if(S.open){ drawChart(); measureSheet(); } });
 
   /* przeliczenie po zmianie projektu albo pogody */
   const _refreshAll = window.refreshAll;

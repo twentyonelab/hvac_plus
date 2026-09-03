@@ -63,6 +63,7 @@
   <symbol id="i-cloud-sun" viewBox="0 0 24 24"><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6"/></symbol>
   <symbol id="i-droplet" viewBox="0 0 24 24"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></symbol>
   <symbol id="i-sun2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></symbol>
   <symbol id="i-arrow-ur" viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></symbol>
   <symbol id="i-wind" viewBox="0 0 24 24"><path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/></symbol>
 </svg>
@@ -253,9 +254,6 @@
             </div>
           </div>
         </div>
-        <button type="button" id="simBtn" title="Symulacja doby: pogoda, pora dnia, obłożenie">
-          <svg class="i"><use href="#i-timer"/></svg><span>Symulacja</span>
-        </button>
         <div id="zoombar">
           <button id="zin" title="Powiększ"><svg class="i"><use href="#i-zoom-in"/></svg></button>
           <button id="zout" title="Pomniejsz"><svg class="i"><use href="#i-zoom-out"/></svg></button>
@@ -273,6 +271,7 @@
         <div id="simSheet" hidden>
           <div class="sim-head">
             <button type="button" class="sim-play" id="simPlay" title="Odtwórz / zatrzymaj"><svg class="i"><use href="#i-play2"/></svg></button>
+            <span class="sim-dn" id="simDN" title="Pora dnia"><svg class="i"><use href="#i-sun2"/></svg></span>
             <b id="simClock">00:00</b>
             <span class="sim-phase" id="simPhase">—</span>
             <span class="sim-hint">przeciągnij po wykresie, aby przewijać dobę</span>
@@ -280,6 +279,8 @@
               <option value="60">×60</option>
               <option value="180" selected>×180</option>
               <option value="600">×600</option>
+              <option value="1200">×1200</option>
+              <option value="2400">×2400</option>
             </select>
             <button type="button" class="sim-x" id="simClose" title="Zamknij symulację"><svg class="i"><use href="#i-x2"/></svg></button>
           </div>
@@ -292,6 +293,7 @@
               <div class="sim-k mint"><b id="simSave">—</b><span>oszczędza odzysk</span></div>
               <div class="sim-k"><b id="simDay">—</b><span>doba: zużycie / zysk</span></div>
               <div class="sim-k"><b id="simOcc">—</b><span>obłożenie i tryb</span></div>
+              <div class="sim-k"><b id="simCo2">—</b><span>CO₂ maks. (symulacja)</span></div>
             </div>
           </div>
         </div>
@@ -310,21 +312,28 @@
           <span class="lg"><i class="solid"></i>kanał spiro</span>
           <span class="lg"><i class="dash"></i>przewód FLX</span>
           </div>
-          <button id="legendBtn" type="button" aria-expanded="false" title="Legenda oznaczeń (2D i 3D)"><svg class="i"><use href="#i-list"/></svg><span>Legenda</span></button>
-        </div>
-        <div id="wxCard" hidden>
-          <div class="wx-top">
-            <svg class="i wx-ic"><use href="#i-cloud-sun"/></svg>
-            <div class="wx-t"><b id="wxTemp">—</b><span id="wxDesc">—</span></div>
+          <div class="lg-row">
+            <div id="statusbar"><span id="stCoords">—</span><span id="stScale">skala: nieskalibrowana</span><span id="stSel"></span></div>
+            <button id="legendBtn" type="button" aria-expanded="false" title="Legenda oznaczeń (2D i 3D)"><svg class="i"><use href="#i-list"/></svg><span>Legenda</span></button>
           </div>
-          <div class="wx-rows">
-            <div><span>wilgotność</span><b id="wxHum">—</b></div>
-            <div><span>wiatr</span><b id="wxWind">—</b></div>
-            <div><span>nasłonecznienie</span><b id="wxRad">—</b></div>
-          </div>
-          <div class="wx-foot"><span id="wxPlace">—</span> · Open-Meteo <svg class="i"><use href="#i-arrow-ur"/></svg></div>
         </div>
-        <div id="statusbar"><span id="stCoords">—</span><span id="stScale">skala: nieskalibrowana</span><span id="stSel"></span></div>
+        <div id="blStack">
+          <button type="button" id="simBtn" title="Symulacja doby: pogoda, pora dnia, obłożenie">
+            <svg class="i"><use href="#i-timer"/></svg><span>Symulacja</span>
+          </button>
+          <div id="wxCard" hidden>
+            <div class="wx-top">
+              <svg class="i wx-ic"><use href="#i-cloud-sun"/></svg>
+              <div class="wx-t"><b id="wxTemp">—</b><span id="wxDesc">—</span></div>
+            </div>
+            <div class="wx-rows">
+              <div><span>wilgotność</span><b id="wxHum">—</b></div>
+              <div><span>wiatr</span><b id="wxWind">—</b></div>
+              <div><span>nasłonecznienie</span><b id="wxRad">—</b></div>
+            </div>
+            <div class="wx-foot"><span id="wxPlace">—</span> · <span id="wxSrc">Open-Meteo</span> <svg class="i"><use href="#i-arrow-ur"/></svg></div>
+          </div>
+        </div>
       </div>
     </main>
   </div>

@@ -11,10 +11,8 @@ const V3_COL={sup:'#2D62BE',exh:'#D12E4F',fresh:'#248964',out:'#A57327',mix:'#81
 function v3RoomColor(role){
   return role==='exh'?'rgba(209,46,79,':role==='both'?'rgba(129,84,182,':role==='sup'?'rgba(45,98,190,':role==='excluded'?'rgba(142,144,150,':'rgba(142,144,150,';
 }
-/* podłogi w 3D: ten sam kolor rozbielony o połowę (jak tła w rzucie) */
-function v3RoomFill(role){
-  return role==='exh'?'rgba(255,178,194,':role==='both'?'rgba(218,194,245,':role==='sup'?'rgba(158,194,255,':'rgba(221,223,227,';
-}
+/* podłogi w 3D: dokładnie te same tinty co tła pomieszczeń w rzucie 2D */
+function v3RoomFill(role){ return roomFillTint(role); }
 function v3CenterOf(f,ppm){
   const xs=[],ys=[];
   f.rooms.forEach(r=>r.pts.forEach(p=>{xs.push(p.x);ys.push(p.y);}));
@@ -186,8 +184,9 @@ function render3D(g,W,H,cam,opts){
         const t=ROOM_TYPES[r.type]||{}, col=v3RoomColor(t.role), fillCol=v3RoomFill(t.role);
         const flo=r.pts.map(p=>{ const w=v3W(fl,p); return v3P(w.X,w.Y,fl.z0,cam); });
         g.beginPath(); flo.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath();
-        g.fillStyle=fillCol+(f.bg&&v3.showBg?'0.55)':'0.68)'); g.fill();
-        if(window.CTRL&&CTRL.connected&&CTRL.roomCO2&&CTRL.roomCO2[r.id]!=null){ const c2=CTRL.roomCO2[r.id]; g.fillStyle=co2Color(c2,Math.min(0.5,Math.max(0,(c2-500)/1400))); g.fill(); }
+        g.fillStyle=fillCol+(f.bg&&v3.showBg?'0.55)':'0.62)'); g.fill();
+        const c2r=(focusMode==='co2'||(window.CTRL&&CTRL.connected))? roomCO2(r.id) : null;
+        if(c2r!=null){ g.fillStyle=co2Color(c2r,Math.min(0.55,Math.max(0,(c2r-500)/1400))); g.fill(); }
         g.strokeStyle=col+'0.9)'; g.lineWidth=1.4; g.stroke();
         if(v3.showWalls){
           const cei=r.pts.map(p=>{ const w=v3W(fl,p); return v3P(w.X,w.Y,fl.zc,cam); });
@@ -211,7 +210,7 @@ function render3D(g,W,H,cam,opts){
           g.fillStyle='#1C1C1E'; g.textAlign='center'; g.font=font(600,Math.max(9,Math.min(13,cam.scale*0.3)));
           g.fillText(roomName(r),P.x,P.y);
           if(zoningOn()){ const z=roomZone(r); if(z){ const tw=g.measureText(roomName(r)).width; g.font=font(700,9.5); g.fillStyle=ZONES[z].c; g.fillText(ZONES[z].short,P.x+tw/2+11,P.y); g.fillStyle='#1C1C1E'; } }
-          if(window.CTRL&&CTRL.connected&&CTRL.roomCO2&&CTRL.roomCO2[r.id]!=null){ const c2=CTRL.roomCO2[r.id]; g.font=font(700,10); g.fillStyle=co2Color(c2,1); g.fillText(`CO₂ ${fmt(c2)}`,P.x,P.y+24); }
+          if(c2r!=null){ g.font=font(700,10); g.fillStyle=co2Color(c2r,1); g.fillText(`CO₂ ${fmt(c2r)}`,P.x,P.y+24); }
           if(info&&(info.sup||info.exh)){ g.font=font('',Math.max(8,Math.min(11,cam.scale*0.25))); g.fillStyle='#6B6D73';
             g.fillText((info.sup?`N ${fmt(info.sup)}`:'')+(info.sup&&info.exh?' · ':'')+(info.exh?`W ${fmt(info.exh)}`:'')+' m³/h',P.x,P.y+12); }
         }
@@ -302,9 +301,13 @@ function render3D(g,W,H,cam,opts){
         if(v3.showLabels){ g.fillStyle=col; g.font=font(600,10); g.textAlign='center'; g.fillText(n.type==='intake'?'czerpnia':'wyrzutnia',top.x,top.y-6); }
       }
       else if(n.type==='person'){
-        v3Cyl(g,cam,w.X,w.Y,fl.z0,0.17,1.25,isSel?'#A9EBC9':'#7B5CC1');
-        const hp=v3P(w.X,w.Y,fl.z0+1.45,cam); g.beginPath(); g.arc(hp.x,hp.y,Math.max(3,0.12*cam.scale),0,7); g.fillStyle=isSel?'#A9EBC9':'#9E85D6'; g.fill(); g.strokeStyle='#fff'; g.lineWidth=1; g.stroke();
+        /* mieszkańcy jak w rzucie 2D: ciemna szarość, także pojawianie się w symulacji */
+        if(window.__simPersonAlpha){ const pa=window.__simPersonAlpha(n); if(pa<=0.01){ return; } g.globalAlpha=pa; }
+        const pc=(NODE_DEFS.person&&NODE_DEFS.person.c)||'#4A4B50';
+        v3Cyl(g,cam,w.X,w.Y,fl.z0,0.17,1.25,isSel?'#A9EBC9':pc);
+        const hp=v3P(w.X,w.Y,fl.z0+1.45,cam); g.beginPath(); g.arc(hp.x,hp.y,Math.max(3,0.12*cam.scale),0,7); g.fillStyle=isSel?'#A9EBC9':v3Shade(pc,1.25); g.fill(); g.strokeStyle='#fff'; g.lineWidth=1; g.stroke();
         top=v3P(w.X,w.Y,fl.z0+1.7,cam);
+        g.globalAlpha=1;
       }
       if(top) v3.hits.push({x:top.x,y:top.y,n,fl});
     });
