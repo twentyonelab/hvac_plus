@@ -877,17 +877,12 @@ function draw(){
     const d=NODE_DEFS[n.type], r=d.r/view.z*Math.min(view.z,1.6);
     const isSel=sel&&sel.kind==='node'&&sel.id===n.id;
     ctx.beginPath();
-    if(n.type==='person'){ // sylwetka: głowa + tułów
-      /* w symulacji mieszkańcy są biali z miękkim cieniem — na szarym rysunku
-         to jedyny sposób, żeby było widać, kto jest w domu */
-      const simP=!!window.__simGray;
-      if(simP){ ctx.shadowColor='rgba(18,20,28,.55)'; ctx.shadowBlur=lw(10); ctx.shadowOffsetY=lw(1.5); }
-      const pfill=isSel?'#A9EBC9':(simP?'#FFFFFF':d.c);
-      ctx.arc(n.x,n.y-r*0.55,r*0.42,0,7); ctx.fillStyle=pfill; ctx.fill();
-      ctx.beginPath(); ctx.moveTo(n.x-r*0.75,n.y+r*0.9); ctx.quadraticCurveTo(n.x-r*0.8,n.y-r*0.15,n.x,n.y-r*0.1); ctx.quadraticCurveTo(n.x+r*0.8,n.y-r*0.15,n.x+r*0.75,n.y+r*0.9); ctx.closePath(); ctx.fill();
-      ctx.shadowColor='transparent'; ctx.shadowBlur=0; ctx.shadowOffsetY=0;
-      ctx.strokeStyle=simP?'rgba(38,40,48,.65)':'#fff'; ctx.lineWidth=lw(simP?1:1.2); ctx.stroke();
-      if(!n.roomId){ ctx.strokeStyle='#C03048'; ctx.setLineDash([lw(3),lw(2)]); ctx.beginPath(); ctx.arc(n.x,n.y,r*1.3,0,7); ctx.stroke(); ctx.setLineDash([]); }
+    if(n.type==='person'){
+      /* w symulacji postać stoi tam, gdzie ją w tej chwili prowadzi scenariusz
+         doby — same dane projektu (n.x, n.y) zostają nietknięte */
+      const pose=(window.__simPersonPose&&window.__simPersonPose(n))||null;
+      personSym(ctx, pose?pose.x:n.x, pose?pose.y:n.y, r, lw,
+        {sel:isSel, sim:!!window.__simGray, warn:!n.roomId&&!pose});
       ctx.globalAlpha=1;
       return; }
     if(n.type==='ahu'){ ctx.rect(n.x-r*1.4,n.y-r,r*2.8,r*2); } else ctx.arc(n.x,n.y,r,0,7);
@@ -909,6 +904,16 @@ function draw(){
       }
     }
   });
+  /* goście z symulacji — nie ma ich w projekcie, więc dorysowujemy ich tutaj */
+  if(window.__simGuests){
+    const rr=NODE_DEFS.person.r/view.z*Math.min(view.z,1.6)*0.92;
+    (window.__simGuests()||[]).forEach(gst=>{
+      if(gst.fi!==state.activeFloor) return;
+      ctx.globalAlpha=gst.alpha==null?1:gst.alpha;
+      personSym(ctx,gst.x,gst.y,rr,lw,{sim:true,guest:true});
+      ctx.globalAlpha=1;
+    });
+  }
   focusEnd(ctx);
   /* odbarwienie symulacji, a po nim mgła CO₂ — jedyny kolor na szarym rysunku */
   simGrayPass(ctx,cv.clientWidth,cv.clientHeight);
@@ -927,6 +932,31 @@ function selLabel(){
   if(sel.kind==='node'){ const n=f.nodes.find(x=>x.id===sel.id); return n?NODE_DEFS[n.type].label:''; }
   if(sel.kind==='seg'){ const s=f.segs.find(x=>x.id===sel.id); return s?(s.kind==='flx'?'przewód FLX':'kanał spiro'):''; }
   return '';
+}
+/* sylwetka człowieka na rzucie: głowa + tułów. Wspólna dla mieszkańców
+   z projektu i dla gości dorysowanych przez symulację.
+   W symulacji postać jest biała z miękkim cieniem — na szarym rysunku to
+   jedyny sposób, żeby od razu było widać, kto jest w domu. */
+function personSym(g, x, y, r, lw, o){
+  o=o||{};
+  const fill = o.sel?'#A9EBC9':(o.sim?'#FFFFFF':(NODE_DEFS.person.c||'#4A4B50'));
+  g.beginPath();
+  if(o.sim){ g.shadowColor='rgba(18,20,28,.55)'; g.shadowBlur=lw(10); g.shadowOffsetY=lw(1.5); }
+  g.arc(x,y-r*0.55,r*0.42,0,7); g.fillStyle=fill; g.fill();
+  g.beginPath(); g.moveTo(x-r*0.75,y+r*0.9);
+  g.quadraticCurveTo(x-r*0.8,y-r*0.15,x,y-r*0.1);
+  g.quadraticCurveTo(x+r*0.8,y-r*0.15,x+r*0.75,y+r*0.9);
+  g.closePath(); g.fill();
+  g.shadowColor='transparent'; g.shadowBlur=0; g.shadowOffsetY=0;
+  g.strokeStyle=o.sim?'rgba(38,40,48,.65)':'#fff'; g.lineWidth=lw(o.sim?1:1.2); g.stroke();
+  if(o.guest){   // gość: cienki pierścień, żeby odróżnić od domowników
+    g.strokeStyle='rgba(38,40,48,.5)'; g.lineWidth=lw(1); g.setLineDash([lw(2.5),lw(2)]);
+    g.beginPath(); g.arc(x,y,r*1.25,0,7); g.stroke(); g.setLineDash([]);
+  }
+  if(o.warn){    // mieszkaniec poza obrysem pomieszczenia
+    g.strokeStyle='#C03048'; g.setLineDash([lw(3),lw(2)]);
+    g.beginPath(); g.arc(x,y,r*1.3,0,7); g.stroke(); g.setLineDash([]);
+  }
 }
 /* ---------- mgła CO₂ ----------
    Stężenie rysujemy jako obłok, nie jako płaską plamę: kilka miękkich plam

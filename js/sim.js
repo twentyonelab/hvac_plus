@@ -17,7 +17,7 @@
   const SFP = 0.35;                  // moc wentylatorów [W na m³/h] — rząd wielkości dla central domowych
   const STEP = 5;                    // krok symulacji [min]
 
-  const S = { open:false, playing:false, min:8*60, speed:180, raf:0, t0:0 };
+  const S = { open:false, playing:false, min:8*60, speed:180, raf:0, t0:0, living:null };
 
   const $ = s => document.querySelector(s);
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -62,22 +62,136 @@
   }
   window.__simWeather = () => S.open ? simWeatherAt(S.min, weatherBase()) : null;
 
+  /* =================== ŻYCIE W DOMU: KTO GDZIE JEST ===================
+     Mieszkańcy na rzucie to dane projektu (ich rozmieszczenie decyduje o
+     rozdziale nawiewu), więc symulacja ICH NIE PRZESUWA — liczy tylko pozycje
+     „na czas odtwarzania" i podaje je warstwie rysującej. Po zamknięciu
+     symulacji projekt jest dokładnie taki, jak był.
+
+     Doba ma fazy; w każdej fazie każdy mieszkaniec dostaje pomieszczenie
+     docelowe (deterministycznie, więc przebieg jest powtarzalny) i miejsce
+     w jego obrysie. Między fazami postać przechodzi płynnie. Wieczorem
+     wpadają goście — pojawiają się w części dziennej i podbijają CO₂. */
+  const SLEEP=['sypialnia','pokoj','pokoj_oddzielony'];
+  const DAY  =['salon','salon_aneks'];
+  const COOK =['kuchnia_gaz','kuchnia_el','kuchnia_bez_okna','salon_aneks'];
+  const BATH =['lazienka','wc'];
+  const HALL =['komunikacja'];
+  const PHASES=[
+    {h:0.0,  kind:'sen',      rooms:SLEEP, home:true},   // w nocy każdy u siebie
+    {h:6.5,  kind:'poranek',  rooms:[...COOK,...BATH]},
+    {h:8.0,  kind:'dzień',    rooms:[...DAY,...COOK]},
+    {h:16.0, kind:'powrót',   rooms:[...DAY,...SLEEP]},
+    {h:17.0, kind:'kolacja',  rooms:[...COOK,...DAY]},
+    {h:19.5, kind:'wieczór',  rooms:[...DAY,...SLEEP,...BATH]},
+    {h:22.5, kind:'sen',      rooms:SLEEP, home:true}
+  ];
+  const GUESTS={from:17.5, to:21.5, n:3};    // wizyta: godziny i liczba osób
+  const WALK=22;                              // minut na przejście do nowego pomieszczenia
+
+  /* powtarzalny „los" z dwóch liczb — ten sam przebieg przy każdym otwarciu */
+  const rnd=(a,b)=>{ const x=Math.sin(a*127.1+b*311.7)*43758.5453; return x-Math.floor(x); };
+  /* punkt wewnątrz obrysu: środek plus rozrzut, z kilkoma próbami */
+  function spotIn(r, seed){
+    const c=polyCentroid(r.pts);
+    const xs=r.pts.map(p=>p.x), ys=r.pts.map(p=>p.y);
+    const w=(Math.max(...xs)-Math.min(...xs))*0.30, h=(Math.max(...ys)-Math.min(...ys))*0.30;
+    for(let i=0;i<6;i++){
+      const p={x:c.x+(rnd(seed,i)*2-1)*w, y:c.y+(rnd(seed+7,i)*2-1)*h};
+      if(pointInPoly(p,r.pts)) return p;
+    }
+    return c;
+  }
+  function phaseAt(h){ let i=0; PHASES.forEach((p,k)=>{ if(h>=p.h) i=k; }); return i; }
+  /* pojemność pomieszczenia — ile osób siedzi w nim bez tłoku */
+  function cap(r){
+    const t=ROOM_TYPES[r.type]||{};
+    if(t.osoby) return t.osoby;
+    const a=(window.CALC&&CALC.rooms&&CALC.rooms[r.id]&&CALC.rooms[r.id].area)||10;
+    return Math.max(1, Math.round(a/8));
+  }
+  /* wybór pomieszczenia: najpierw własne (nocą i gdy pasuje do fazy), potem
+     najmniej obciążone z kandydatów — dzięki temu dom się rozkłada zamiast
+     ściskać wszystkich w jednym pokoju */
+  function roomFor(floor, phase, homeId, seed, load){
+    const home=floor.rooms.find(r=>r.id===homeId);
+    if(home && (phase.home || phase.rooms.includes(home.type))) return home;
+    const cand=floor.rooms.filter(r=>phase.rooms.includes(r.type));
+    if(!cand.length) return home || floor.rooms[0] || null;
+    let best=null, bs=1e9;
+    cand.forEach((r,i)=>{
+      const sc=((load[r.id]||0)+1)/cap(r) + rnd(seed,i)*0.18;
+      if(sc<bs){ bs=sc; best=r; }
+    });
+    return best||home;
+  }
+  /* pozycje wszystkich obecnych mieszkańców + gości na daną minutę */
+  function livingAt(min, ctxData){
+    const h=min/60, pi=phaseAt(h), ph=PHASES[pi], prev=PHASES[(pi-1+PHASES.length)%PHASES.length];
+    const tIn=(h-ph.h+24)%24*60;                       // minut od początku fazy
+    const k=Math.max(0,Math.min(1,tIn/WALK)), ease=k*k*(3-2*k);
+    const poses={}, perRoom={}, guests=[];
+    const occ=occupancyAt(min, ctxData.persons);
+    const homeIds=[]; (state.floors||[]).forEach(f=>f.nodes.forEach(n=>{ if(n.type==='person') homeIds.push(n.id); }));
+    homeIds.sort();
+    const presentIds=new Set(homeIds.slice(0,Math.min(occ.n,homeIds.length)));
+    const loadNow={}, loadPrev={};
+    const pj=(pi-1+PHASES.length)%PHASES.length;
+    (state.floors||[]).forEach((f,fi)=>{
+      f.nodes.forEach(n=>{
+        if(n.type!=='person'||!presentIds.has(n.id)) return;
+        const seed=[...n.id].reduce((a,c)=>a+c.charCodeAt(0),0);
+        const rNow =roomFor(f, ph,   n.roomId, seed+pi*13, loadNow);
+        const rPrev=roomFor(f, prev, n.roomId, seed+pj*13, loadPrev);
+        if(rNow)  loadNow[rNow.id]=(loadNow[rNow.id]||0)+1;
+        if(rPrev) loadPrev[rPrev.id]=(loadPrev[rPrev.id]||0)+1;
+        const a=rPrev?spotIn(rPrev,seed+pi*3):{x:n.x,y:n.y};
+        const b=rNow ?spotIn(rNow ,seed+pi*3+1):{x:n.x,y:n.y};
+        /* delikatne „oddychanie" pozycji, żeby postać nie stała jak wryta */
+        poses[n.id]={ x:a.x+(b.x-a.x)*ease+Math.sin(min/37+seed)*2.2,
+                      y:a.y+(b.y-a.y)*ease+Math.cos(min/41+seed)*2.2,
+                      roomId:((ease>0.5?rNow:rPrev)||{}).id||n.roomId, fi };
+        const rid=poses[n.id].roomId; if(rid) perRoom[rid]=(perRoom[rid]||0)+1;
+      });
+    });
+    /* goście — pojawiają się w części dziennej parteru */
+    if(h>=GUESTS.from && h<GUESTS.to){
+      const fi=(state.floors||[]).findIndex(f=>f.rooms.some(r=>DAY.includes(r.type)));
+      const f=state.floors[fi<0?0:fi];
+      const fade=Math.min(1,(h-GUESTS.from)/0.5, (GUESTS.to-h)/0.5);
+      const gLoad={}; Object.keys(perRoom).forEach(k=>gLoad[k]=perRoom[k]);
+      if(f) for(let i=0;i<GUESTS.n;i++){
+        const r=roomFor(f,{rooms:[...DAY,...COOK]},null,900+i*17,gLoad);
+        if(!r) continue;
+        gLoad[r.id]=(gLoad[r.id]||0)+1;
+        const p=spotIn(r, 900+i*17);
+        guests.push({ id:'guest'+i, fi:fi<0?0:fi, roomId:r.id, alpha:Math.max(0,Math.min(1,fade)),
+                      x:p.x+Math.sin(min/29+i)*2.5, y:p.y+Math.cos(min/33+i)*2.5 });
+        perRoom[r.id]=(perRoom[r.id]||0)+1;
+      }
+    }
+    return {poses, perRoom, guests, occ};
+  }
+  window.__simPersonPose = n => (S.open && S.living && S.living.poses[n.id]) || null;
+  window.__simGuests = () => (S.open && S.living) ? S.living.guests : [];
+
   /* ---------- fikcyjne CO₂ w pomieszczeniach ----------
      Bilans ustalony: człowiek wydziela ~20 l CO₂/h, więc przyrost nad tłem
      to 20·n·1000 / V_pom [m³/h]. Tło zewnętrzne 430 ppm. Rozkład osób
      w pomieszczeniach bierzemy z rzutu, przeskalowany profilem obłożenia. */
-  function simCO2At(min, ctxData){
+  function simCO2At(min, ctxData, living){
     const occ = occupancyAt(min, ctxData.persons);
-    const share = ctxData.persons ? occ.n/ctxData.persons : 0;
     const C = window.CALC||{}, out = {};
+    const inRoom = (living&&living.perRoom) || {};
     (state.floors||[]).forEach(f=>{
-      const inRoom = {};
-      f.nodes.forEach(n=>{ if(n.type==='person'&&n.roomId) inRoom[n.roomId]=(inRoom[n.roomId]||0)+1; });
       f.rooms.forEach(r=>{
         const info=(C.rooms||{})[r.id]||{};
-        const flow=Math.max(8,(info.sup||0)*occ.k || (info.exh||0)*occ.k || 12);
-        const n=(inRoom[r.id]||0)*share;
-        const gen = 20*n;                                    // l/h
+        /* pomieszczenia przelotowe (hol, antresola) przewietrza powietrze
+           tranzytowe — nie mają własnego nawiewu, ale nie są workiem bez wymiany */
+        const transfer=(ROOM_TYPES[r.type]||{}).role==='transfer';
+        const own=((info.sup||0)||(info.exh||0))*occ.k;
+        const flow=Math.max(transfer?30:10, own || (transfer?30:14));
+        const gen = 20*(inRoom[r.id]||0);                    // l/h — 20 l CO₂ na osobę
         out[r.id] = Math.round(430 + gen*1000/flow);
       });
     });
@@ -211,6 +325,7 @@
     const { sum } = dayCurve();
     const p = pointAt(S.min, sum.ctx);
     updatePresence(p.occ.n);
+    S.living = livingAt(S.min, sum.ctx);          // kto gdzie stoi w tej chwili
     const f1 = (x,u,d=0)=> `${x.toLocaleString('pl-PL',{minimumFractionDigits:d,maximumFractionDigits:d})} ${u}`;
     $('#simClock').textContent = hhmm(S.min);
     $('#simPhase').textContent = p.sun>0.02 ? (p.sun>0.5?'dzień':'świt / zmierzch') : 'noc';
@@ -219,10 +334,12 @@
     $('#simPow').textContent  = f1(p.qZ+p.fan,'W');
     $('#simSave').textContent = f1(p.save,'W');
     $('#simDay').textContent  = `${f1(sum.eZ+sum.eFan,'',1)} / ${f1(sum.save,'kWh',1)}`;
-    $('#simOcc').textContent  = `${p.occ.n} os. · ${p.occ.tryb}`;
-    $('#simOcc').title        = `strumień bieżący ${Math.round(p.v)} m³/h`;
-    /* fikcyjne CO₂ — widoczne na rysunku i w stylu wyświetlania „tylko CO₂” */
-    window.__simCO2 = simCO2At(S.min, sum.ctx);
+    const gN=S.living.guests.length;
+    $('#simOcc').textContent  = `${p.occ.n}${gN?'+'+gN:''} os. · ${p.occ.tryb}`;
+    $('#simOcc').title        = `strumień bieżący ${Math.round(p.v)} m³/h`
+      + (gN?` · w domu ${gN===1?'jest gość':'są goście'} (${gN}) — oddychają, a centrala pracuje na nominale, stąd skok CO₂`:'');
+    /* fikcyjne CO₂ — z bieżącego rozmieszczenia osób, nie ze statycznego rzutu */
+    window.__simCO2 = simCO2At(S.min, sum.ctx, S.living);
     const co2max = Math.max(430, ...Object.values(window.__simCO2));
     $('#simCo2').textContent  = `${fmt(co2max)} ppm`;
     $('#simCo2').title        = 'CO₂ liczone z obłożenia i bieżącego strumienia — dane przykładowe';
@@ -308,7 +425,7 @@
     $('#simBtn').classList.toggle('on',on);
     document.body.classList.toggle('sim-open',on);
     syncGray();
-    if(!on){ play(false); fade.clear(); window.__simCO2=null; }
+    if(!on){ play(false); fade.clear(); window.__simCO2=null; S.living=null; }
     else { cache.key=''; refresh(); }
     measureSheet();
     if(window.syncWeatherCard) syncWeatherCard();
@@ -344,5 +461,7 @@
   const _refreshAll = window.refreshAll;
   window.refreshAll = function(){ _refreshAll(); if(S.open){ cache.key=''; refresh(); } };
 
-  window.HvacSim = { open, get state(){ return {...S}; }, dayCurve };
+  window.HvacSim = { open, get state(){ return {...S}; }, dayCurve,
+    setMin(m){ S.min=clamp(m,0,1439); if(S.open) refresh(); },   // do testów i sterowania z zewnątrz
+    living(){ return S.living; } };
 })();

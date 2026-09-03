@@ -268,6 +268,22 @@ function render3D(g,W,H,cam,opts){
     focusEnd(g);
     // ---- węzły (sortowane po bliskości) ----
     const nodes=f.nodes.filter(n=>n.type!=='riser').map(n=>{ const w=v3W(fl,n); return {n,w,nn:v3P(w.X,w.Y,fl.zd,cam).n}; }).sort((a,b)=>a.nn-b.nn);
+    /* postać w 3D: walec + głowa. Gość dostaje mniejszą sylwetkę i pierścień. */
+    const person3D=(w,isSel,guest)=>{
+      const simP=!!window.__simGray;
+      const pc=simP?'#FFFFFF':((NODE_DEFS.person&&NODE_DEFS.person.c)||'#4A4B50');
+      const rr=guest?0.15:0.17, hh=guest?1.15:1.25;
+      if(simP){ g.shadowColor='rgba(18,20,28,.55)'; g.shadowBlur=10; g.shadowOffsetY=2; }
+      v3Cyl(g,cam,w.X,w.Y,fl.z0,rr,hh,isSel?'#A9EBC9':pc);
+      const hp=v3P(w.X,w.Y,fl.z0+hh*1.16,cam);
+      g.beginPath(); g.arc(hp.x,hp.y,Math.max(3,(guest?0.10:0.12)*cam.scale),0,7);
+      g.fillStyle=isSel?'#A9EBC9':(simP?'#FFFFFF':v3Shade(pc,1.25)); g.fill();
+      g.shadowColor='transparent'; g.shadowBlur=0; g.shadowOffsetY=0;
+      g.strokeStyle=simP?'rgba(38,40,48,.6)':'#fff'; g.lineWidth=1; g.stroke();
+      if(guest){ const fp=v3P(w.X,w.Y,fl.z0,cam);
+        g.strokeStyle='rgba(38,40,48,.45)'; g.setLineDash([3,2]); g.lineWidth=1;
+        g.beginPath(); g.ellipse(fp.x,fp.y,0.28*cam.scale,0.28*cam.scale*Math.sin(cam.elev),0,0,7); g.stroke(); g.setLineDash([]); }
+    };
     focusStart(g,'nodes');
     nodes.forEach(({n,w})=>{
       const info=(C.nodes||{})[n.id]||{};
@@ -303,20 +319,23 @@ function render3D(g,W,H,cam,opts){
         if(v3.showLabels){ g.fillStyle=col; g.font=font(600,10); g.textAlign='center'; g.fillText(n.type==='intake'?'czerpnia':'wyrzutnia',top.x,top.y-6); }
       }
       else if(n.type==='person'){
-        /* mieszkańcy jak w rzucie 2D: ciemna szarość, także pojawianie się w symulacji */
+        /* mieszkańcy jak w rzucie 2D: ciemna szarość, w symulacji biali z cieniem;
+           pozycję w symulacji podaje scenariusz doby, dane projektu bez zmian */
         if(window.__simPersonAlpha){ const pa=window.__simPersonAlpha(n); if(pa<=0.01){ return; } g.globalAlpha=pa; }
-        const simP=!!window.__simGray;
-        const pc=simP?'#FFFFFF':((NODE_DEFS.person&&NODE_DEFS.person.c)||'#4A4B50');
-        if(simP){ g.shadowColor='rgba(18,20,28,.55)'; g.shadowBlur=10; g.shadowOffsetY=2; }
-        v3Cyl(g,cam,w.X,w.Y,fl.z0,0.17,1.25,isSel?'#A9EBC9':pc);
-        const hp=v3P(w.X,w.Y,fl.z0+1.45,cam); g.beginPath(); g.arc(hp.x,hp.y,Math.max(3,0.12*cam.scale),0,7);
-        g.fillStyle=isSel?'#A9EBC9':(simP?'#FFFFFF':v3Shade(pc,1.25)); g.fill();
-        g.shadowColor='transparent'; g.shadowBlur=0; g.shadowOffsetY=0;
-        g.strokeStyle=simP?'rgba(38,40,48,.6)':'#fff'; g.lineWidth=1; g.stroke();
-        top=v3P(w.X,w.Y,fl.z0+1.7,cam);
+        const pose=(window.__simPersonPose&&window.__simPersonPose(n))||null;
+        const pw=pose?v3W(fl,pose):w;
+        person3D(pw,isSel,false);
+        top=v3P(pw.X,pw.Y,fl.z0+1.7,cam);
         g.globalAlpha=1;
       }
       if(top) v3.hits.push({x:top.x,y:top.y,n,fl});
+    });
+    /* goście z symulacji — tylko na tej kondygnacji */
+    if(window.__simGuests) (window.__simGuests()||[]).forEach(gst=>{
+      if(gst.fi!==fl.fi) return;
+      g.globalAlpha=gst.alpha==null?1:gst.alpha;
+      person3D(v3W(fl,gst),false,true);
+      g.globalAlpha=1;
     });
     focusEnd(g);
     // ---- etykieta kondygnacji ----
