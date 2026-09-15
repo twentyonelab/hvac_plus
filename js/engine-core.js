@@ -104,19 +104,37 @@ let bgAdjust = false;      // otwarty panel „Popraw” podkładu
 let show2dLabels = true;   // warstwa „opisy” w rzucie 2D (panel Warstwy)
 const undoStack = [];
 const redoStack = [];
-function snapshot(){ undoStack.push(JSON.stringify(stripBg(state))); if(undoStack.length>40) undoStack.shift(); redoStack.length=0; }
-function stripBg(s){ return s; } // tła zostają w undo (dataURL) — akceptowalne dla domowych projektów
-/* przywrócenie stanu z zrzutu; tła (dataURL) nie wędrują między zrzutami */
-function applyState(json){
-  const bgs=state.floors.map(f=>f.bg);
-  state=JSON.parse(json);
-  state.floors.forEach((f,i)=>{ if(!f.bg && bgs[i]) f.bg=bgs[i]; });
-  sel=null; refreshAll();
+const UNDO_MAX = 100;                 // ile kroków pamiętamy wstecz
+/* Podkłady (dataURL, nierzadko kilka MB) nie wędrują do historii — zrzut trzyma
+   tylko odnośnik do puli, więc setka kroków waży tyle, co sam projekt.
+   Dzięki odnośnikowi cofnięcie „wgraj podkład” naprawdę zdejmuje podkład. */
+const bgRefOf = new Map();            // dataURL → id
+const bgById  = new Map();            // id → dataURL
+let bgSeq = 0;
+function snapState(){
+  const floors=state.floors.map(f=>{
+    let ref=null;
+    if(f.bg){ ref=bgRefOf.get(f.bg); if(!ref){ ref='bg'+(++bgSeq); bgRefOf.set(f.bg,ref); bgById.set(ref,f.bg); } }
+    return {...f, bg:null, bgRef:ref, maskPrev:null};
+  });
+  return JSON.stringify({...state, floors});
 }
-function undo(){ if(!undoStack.length) return; redoStack.push(JSON.stringify(stripBg(state))); applyState(undoStack.pop()); }
-function redo(){ if(!redoStack.length) return; undoStack.push(JSON.stringify(stripBg(state))); applyState(redoStack.pop()); }
+function snapshot(){
+  undoStack.push(snapState());
+  if(undoStack.length>UNDO_MAX) undoStack.shift();
+  redoStack.length=0;
+}
+function applyState(json){
+  const s=JSON.parse(json);
+  s.floors.forEach(f=>{ f.bg = f.bgRef? (bgById.get(f.bgRef)||null) : null; delete f.bgRef; });
+  state=s; sel=null; maskCache.key=null; refreshAll();
+}
+function undo(){ if(!undoStack.length) return; redoStack.push(snapState()); applyState(undoStack.pop()); }
+function redo(){ if(!redoStack.length) return; undoStack.push(snapState()); applyState(redoStack.pop()); }
 function canUndo(){ return undoStack.length>0; }
 function canRedo(){ return redoStack.length>0; }
+function undoDepth(){ return undoStack.length; }
+function redoDepth(){ return redoStack.length; }
 
 /* ============================ NARZĘDZIA ============================ */
 function uid(){ return 'id'+Math.random().toString(36).slice(2,9); }
@@ -2500,7 +2518,87 @@ function autoTerminals(){
     });
   });
   refreshAll();
-  toast(`Rozmieszczono ${made} anemostatów (≤ ${VALVE_MAX} m³/h na zawór).`+(skipped?' Pominięto garaż/kotłownię (wentylacja niezależna).':'')+' Przesuń zawory w docelowe miejsca i połącz przewodami FLX.');
+  toast(`Rozmieszczono ${made} anemostatów (≤ ${VALVE_MAX} m³/h na zawór).`+(skipped?' Pominięto garaż/kotłownię (wentylacja niezależna).':'')+' Przesuń zawory w docelowe miejsca, a potem „Połącz z centralą”.');
+}
+/* ======= AUTOMATYCZNE ŁĄCZENIE: centrala → rozdzielacze → anemostaty =======
+   Sieć w tym programie jest drzewem: każdy anemostat musi mieć ciągłą trasę do
+   centrali, inaczej nie policzy się ani strumień, ani spręż. Ręczne klikanie
+   kilkunastu przewodów FLX to najżmudniejszy krok projektu, a wynik jest
+   przewidywalny, więc robimy go automatem:
+   - nawiew do rozdzielacza nawiewnego, wywiew do wywiewnego (osobno, bo to
+     dwie niezależne gałęzie),
+   - rozdzielacz na kondygnacji centrali łączy się z nią kanałem spiro,
+   - na pozostałych kondygnacjach przez pion o tym samym numerze (1 = nawiew,
+     2 = wywiew); brakujące piony stawiamy nad sobą przy centrali,
+   - czerpnia i wyrzutnia wpinane są wprost do centrali.
+   Funkcja jest idempotentna: istniejące połączenia zostają nietknięte. */
+function segBetween(f,a,b){ return f.segs.find(s=>(s.a===a&&s.b===b)||(s.a===b&&s.b===a)); }
+function nodeHasSeg(f,id){ return f.segs.some(s=>s.a===id||s.b===id); }
+function addSeg(f,kind,a,b){
+  if(!a||!b||a===b||segBetween(f,a,b)) return null;
+  const s={id:uid(),kind,a,b,pts:[],extraLen:0}; f.segs.push(s); return s;
+}
+/* miejsce na rozdzielacz: hol albo pomieszczenie techniczne, inaczej środek
+   ciężkości obsługiwanych anemostatów; nawiew i wywiew rozsunięte, żeby się
+   nie nakładały */
+function manifoldSpot(f,terms,dxM){
+  const ppm=f.pxPerM||45;
+  const hub=f.rooms.find(r=>r.type==='komunikacja')||f.rooms.find(r=>r.type==='kotlownia');
+  let p;
+  if(hub) p=polyCentroid(hub.pts);
+  else p={x:terms.reduce((a,n)=>a+n.x,0)/terms.length, y:terms.reduce((a,n)=>a+n.y,0)/terms.length};
+  return {x:p.x+dxM*ppm, y:p.y};
+}
+function autoConnect(){
+  const ahus=allNodes().filter(n=>n.type==='ahu');
+  if(!ahus.length){ alert('Nie ma centrali na rzucie.\n\nPrzeciągnij kartę „Centrala” z szyny narzędzi na rzut (najlepiej w pomieszczeniu technicznym), a potem powtórz „Połącz z centralą”.'); return; }
+  const terms=allNodes().filter(n=>n.type==='term_sup'||n.type==='term_exh');
+  if(!terms.length){ alert('Nie ma anemostatów.\n\nUżyj „Rozmieść anemostaty” albo wstaw je ręcznie, a potem powtórz „Połącz z centralą”.'); return; }
+  snapshot();
+  const ahu=ahus[0], ahuF=state.floors[ahu.fi];
+  let nSeg=0, nMan=0, nRis=0; const notes=[];
+  if(ahus.length>1) notes.push('na rzucie jest więcej niż jedna centrala — podłączono do pierwszej');
+  state.floors.forEach((f,fi)=>{
+    [['man_sup','term_sup',1,-0.5],['man_exh','term_exh',2,0.5]].forEach(([mtype,ttype,riserNum,dx])=>{
+      const list=f.nodes.filter(n=>n.type===ttype);
+      if(!list.length) return;
+      let man=f.nodes.find(n=>n.type===mtype);
+      if(!man){ man={id:uid(),type:mtype,...manifoldSpot(f,list,dx)}; f.nodes.push(man); nMan++; }
+      let ports=f.segs.filter(s=>s.kind==='flx'&&(s.a===man.id||s.b===man.id)).length;
+      list.forEach(t=>{ if(nodeHasSeg(f,t.id)) return;
+        if(addSeg(f,'flx',man.id,t.id)){ nSeg++; ports++; } });
+      if(ports>10) notes.push(`rozdzielacz ${mtype==='man_sup'?'nawiewny':'wywiewny'} na kondygnacji „${f.name}” ma ${ports} króćców — rozdziel go na dwa`);
+      if(fi===ahu.fi){ if(addSeg(f,'duct',ahu.id,man.id)) nSeg++; return; }
+      // inna kondygnacja — przez pion o ustalonym numerze
+      let ris=f.nodes.find(n=>n.type==='riser'&&(n.num||1)===riserNum);
+      let risA=ahuF.nodes.find(n=>n.type==='riser'&&(n.num||1)===riserNum);
+      if(!ris||!risA){
+        const ppm=ahuF.pxPerM||45;
+        const at={x:ahu.x+(riserNum===1?0.9:1.7)*ppm, y:ahu.y+2.2*ppm};
+        if(!risA){ risA={id:uid(),type:'riser',x:at.x,y:at.y,num:riserNum,extraLen:3}; ahuF.nodes.push(risA); nRis++; }
+        if(!ris){ ris={id:uid(),type:'riser',x:risA.x,y:risA.y,num:riserNum,extraLen:3}; f.nodes.push(ris); nRis++; }
+        notes.push(`postawiono pion nr ${riserNum} przy centrali — przesuń go w szacht`);
+      }
+      if(addSeg(f,'duct',ris.id,man.id)) nSeg++;
+      if(addSeg(ahuF,'duct',ahu.id,risA.id)) nSeg++;
+    });
+  });
+  // czerpnia i wyrzutnia wprost do centrali
+  ['intake','exhout'].forEach(t=>ahuF.nodes.filter(n=>n.type===t).forEach(n=>{
+    if(!nodeHasSeg(ahuF,n.id)&&addSeg(ahuF,'duct',ahu.id,n.id)) nSeg++; }));
+  recalc();
+  const C=window.CALC||{};
+  const loose=(C.terms||[]).filter(t=>t.connected===false).length;
+  const miss=['intake','exhout'].filter(t=>!allNodes().some(n=>n.type===t));
+  refreshAll();
+  if(!nSeg&&!nMan) { toast('Wszystko było już połączone — nic nie trzeba było dodawać.'); return; }
+  toast(`Połączono: ${nSeg} ${nSeg===1?'odcinek':'odcinków'}`
+    +(nMan?`, ${nMan} ${nMan===1?'rozdzielacz':'rozdzielacze'}`:'')
+    +(nRis?`, ${nRis} ${nRis===1?'pion':'piony'}`:'')
+    +(loose?` · ${loose} anemostatów nadal bez trasy`:'')
+    +(miss.length?` · brakuje: ${miss.map(t=>t==='intake'?'czerpni':'wyrzutni').join(' i ')}`:'')
+    +(notes.length?` · ${notes.join('; ')}`:'')
+    +'. Trasy prowadzone są najkrótszą drogą — przesuń rozdzielacz albo dodaj załamanie, jeśli ma iść inaczej.');
 }
 function placeInRoom(pts,n,avoid){
   const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);
@@ -2540,6 +2638,7 @@ document.getElementById('btnAutoTerms').addEventListener('click',()=>{
   if(!F().rooms.length){ alert('Brak pomieszczeń — użyj „Rozpoznaj pomieszczenia”, narzędzia „Klik: pomieszczenie” lub obrysuj ręcznie.'); return; }
   autoTerminals();
 });
+document.getElementById('btnAutoLink').addEventListener('click',autoConnect);
 document.getElementById('btnMask').addEventListener('click',async()=>{
   const f=F();
   if(f.maskPrev){ f.maskPrev=null; draw(); toast('Podgląd maski wyłączony.'); return; }

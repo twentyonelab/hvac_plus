@@ -126,14 +126,14 @@ svg.i{width:16px;height:16px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-
 /* ---------- scena (rzut / 3D) ---------- */
 #stage{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;padding:2px 8px 16px 2px}
 .stage-h{display:flex;align-items:center;justify-content:space-between;gap:var(--space-8);padding:2px 6px 10px 6px}
-.stage-t{display:flex;flex-direction:column;min-width:0}
-.stage-name{font:500 20px/1.25 var(--font-core);letter-spacing:-.01em;border:none;background:transparent;color:var(--text-primary);outline:none;width:min(34vw,520px);padding:2px 6px;margin-left:-6px;border-radius:var(--radius-sm);transition:var(--transition-control);text-overflow:ellipsis}
+.stage-t{display:flex;flex-direction:column;min-width:0;flex:1 1 auto}
+.stage-name{font:500 20px/1.25 var(--font-core);letter-spacing:-.01em;border:none;background:transparent;color:var(--text-primary);outline:none;width:100%;max-width:min(34vw,520px);padding:2px 6px;margin-left:-6px;border-radius:var(--radius-sm);transition:var(--transition-control);text-overflow:ellipsis}
 .stage-name:hover{background:var(--state-hover)}
 .stage-name:focus{background:var(--surface-card);box-shadow:0 0 0 2px var(--mint-300)}
 .stage-name::placeholder{color:var(--text-tertiary)}
 #stageSub{display:flex;align-items:center;gap:6px;font:var(--type-meta);color:var(--text-secondary);margin-top:6px;min-width:0}
 #stageSubTxt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#floorbar{display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap;justify-content:flex-end;padding-top:4px}
+#floorbar{display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap;justify-content:flex-end;padding-top:4px;flex:0 1 auto}
 #floorbar button{height:var(--control-height-md);padding:0 20px;border:none;border-radius:var(--radius-pill);background:var(--surface-card);color:var(--text-primary);font:var(--type-ui);box-shadow:var(--shadow-card);cursor:pointer;transition:var(--transition-control);display:inline-flex;align-items:center;gap:8px}
 #floorbar button:hover{box-shadow:var(--shadow-raised)}
 #floorbar button.active{background:var(--accent-primary);box-shadow:none}
@@ -204,6 +204,14 @@ svg.i{width:16px;height:16px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-
 .kpi-t b.long{font-size:12.5px;line-height:1.2;white-space:normal}
 .kpi-t.mint{background:var(--mint-100)} .kpi-t.lav{background:var(--lavender-100)} .kpi-t.lime{background:var(--lime-100)}
 .side-sep{height:1px;background:var(--border-soft);margin:10px 0 2px;flex:0 0 auto}
+/* cofnij / przywróć nad rzutem — obok nazwy projektu */
+.stage-undo{display:flex;gap:4px;flex:0 0 auto;margin-right:var(--space-4)}
+.ubtn{position:relative;display:grid;place-items:center;width:34px;height:34px;border:none;border-radius:var(--radius-sm);background:var(--surface-sunken);color:var(--text-secondary);cursor:pointer;transition:var(--transition-control)}
+.ubtn:hover:not(:disabled){background:var(--gray-150);color:var(--text-primary)}
+.ubtn:disabled{opacity:.35;cursor:default}
+.ubtn .i{width:16px;height:16px}
+.ubtn .cnt{position:absolute;top:1px;right:2px;font:600 9px/1 var(--font-core);color:var(--text-tertiary)}
+.ubtn:disabled .cnt{display:none}
 #tabs{display:flex;flex-wrap:wrap;gap:0 2px;flex:0 0 auto;border-bottom:1px solid var(--border-soft);margin-bottom:10px}
 #tabs button{position:relative;height:34px;padding:0 11px;border:none;border-radius:0;background:transparent;color:var(--text-secondary);font:var(--type-ui);font-size:13px;cursor:pointer;transition:color var(--duration-fast) var(--ease-standard);white-space:nowrap}
 #tabs button:hover{color:var(--text-primary)}

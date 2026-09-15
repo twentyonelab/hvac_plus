@@ -115,6 +115,7 @@
           <button class="tbtn auto" id="btnAutoRooms"><span class="ic"><svg class="i"><use href="#i-sparkles"/></svg></span>Rozpoznaj pomieszczenia</button>
           <button class="tbtn auto" data-tool="wand"><span class="ic"><svg class="i"><use href="#i-wand"/></svg></span>Klik: pomieszczenie</button>
           <button class="tbtn auto" id="btnAutoTerms"><span class="ic"><svg class="i"><use href="#i-sparkles"/></svg></span>Rozmieść anemostaty</button>
+          <button class="tbtn auto" id="btnAutoLink"><span class="ic"><svg class="i"><use href="#i-split"/></svg></span>Połącz z centralą</button>
           <button class="tbtn" data-tool="roi"><span class="ic"><svg class="i"><use href="#i-scan"/></svg></span>Obszar analizy</button>
           <button class="tbtn" id="btnRoiClear"><span class="ic"><svg class="i"><use href="#i-rotate"/></svg></span>Wyczyść obszar</button>
           <button class="tbtn" id="btnMask"><span class="ic"><svg class="i"><use href="#i-grid"/></svg></span>Maska ścian (podgląd)</button>
@@ -184,6 +185,12 @@
       <div class="stage-h">
         <div class="stage-t">
           <input id="projName" class="stage-name" placeholder="Nazwa projektu / adres inwestycji" title="Nazwa projektu — kliknij, aby zmienić">
+        </div>
+        <div class="stage-undo">
+          <button type="button" class="ubtn" id="btnUndoTop" title="Cofnij (Ctrl+Z)" aria-label="Cofnij">
+            <svg class="i"><use href="#i-undo"/></svg><span class="cnt" id="undoCnt"></span></button>
+          <button type="button" class="ubtn" id="btnRedoTop" title="Przywróć (Ctrl+Shift+Z)" aria-label="Przywróć">
+            <svg class="i"><use href="#i-redo"/></svg><span class="cnt" id="redoCnt"></span></button>
         </div>
         <div id="floorbar"></div>
       </div>

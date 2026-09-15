@@ -279,12 +279,21 @@
   $('#btnRedo').addEventListener('click',()=>{ if(window.redo) redo(); });
   let editSig='';
   function syncEdit(){
-    const sig=(canUndo()?1:0)+'|'+(canRedo()?1:0)+'|'+(sel?1:0);
+    const u=undoDepth(), r=redoDepth();
+    const sig=u+'|'+r+'|'+(sel?1:0);
     if(sig===editSig) return; editSig=sig;
-    $('#btnUndo').disabled=!canUndo();
-    $('#btnRedo').disabled=!canRedo();
+    $('#btnUndo').disabled=!u;
+    $('#btnRedo').disabled=!r;
     $('#btnDelete').disabled=!sel;
+    /* bliźniacze przyciski nad rzutem — z licznikiem zapamiętanych kroków */
+    const ut=$('#btnUndoTop'), rt=$('#btnRedoTop');
+    if(ut){ ut.disabled=!u; $('#undoCnt').textContent=u?Math.min(u,99):'';
+      ut.title=u?`Cofnij (Ctrl+Z) — w pamięci ${u} ${u===1?'krok':(u<5?'kroki':'kroków')}`:'Cofnij (Ctrl+Z) — nie ma czego cofać'; }
+    if(rt){ rt.disabled=!r; $('#redoCnt').textContent=r?Math.min(r,99):'';
+      rt.title=r?`Przywróć (Ctrl+Shift+Z) — ${r} do przywrócenia`:'Przywróć (Ctrl+Shift+Z)'; }
   }
+  $('#btnUndoTop').addEventListener('click',()=>{ undo(); });
+  $('#btnRedoTop').addEventListener('click',()=>{ redo(); });
 
   /* stan przycisków odświeżamy przy każdym przerysowaniu (tanie, z sygnaturą) */
   const _drawUi=window.draw;

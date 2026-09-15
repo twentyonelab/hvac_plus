@@ -480,4 +480,4 @@ cv.addEventListener('click',e=>{ if(!mode3D) return; e.stopImmediatePropagation(
 cv.addEventListener('dblclick',e=>{ if(!mode3D) return; e.stopImmediatePropagation(); fit3D(); },true);
 /* narzędzia rysowania wyłączają widok 3D */
 document.querySelectorAll('#toolbar .tbtn[data-tool]').forEach(b=>b.addEventListener('click',()=>{ if(mode3D&&b.dataset.tool!=='pan'&&b.dataset.tool!=='select'){ v3SwitchTab('proj'); setMode3D(false); } }));
-['btnAutoRooms','btnAutoTerms','btnMask','btnRoiClear'].forEach(id=>{ const b=document.getElementById(id); if(b) b.addEventListener('click',()=>{ if(mode3D){ v3SwitchTab('proj'); setMode3D(false); } },true); });
+['btnAutoRooms','btnAutoTerms','btnAutoLink','btnMask','btnRoiClear'].forEach(id=>{ const b=document.getElementById(id); if(b) b.addEventListener('click',()=>{ if(mode3D){ v3SwitchTab('proj'); setMode3D(false); } },true); });
