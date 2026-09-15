@@ -187,8 +187,11 @@
 
   function syncMode(){
     const on=is3D();
-    document.querySelectorAll('#modeSwitch button').forEach(b=>
-      b.classList.toggle('active',(b.dataset.mode==='3d')===on));
+    const gl=!!(window.HvacGL&&HvacGL.isOpen());
+    document.querySelectorAll('#modeSwitch button').forEach(b=>{
+      const m=b.dataset.mode;
+      b.classList.toggle('active', gl? m==='3dp' : (m===(on?'3d':'2d')));
+    });
     // kamera jest dostępna też w 2D (wybór widoku przełącza na 3D);
     // suwaki obrotu mają sens tylko w 3D
     $('#camBtn').title = on?'Widok i kamera':'Widok 3D i kamera';

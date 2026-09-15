@@ -6,11 +6,11 @@ Aplikacja webowa 21 zmysłów do projektowania wentylacji mechanicznej z odzyski
 
 ## Co robi
 
-1. Podkład: wgranie rzutu (PDF / PNG / JPG), zmiana rozmiaru podkładu („Popraw"), kalibracja skali.
+1. Podkład: wgranie rzutu (PDF / PNG / JPG), zmiana rozmiaru podkładu („Popraw"), obrót całej kondygnacji o 90° w lewo lub w prawo, kalibracja skali.
 2. Pomieszczenia: prostokąt z dwóch narożników albo nieregularny obrys punkt po punkcie, rozpoznawanie automatyczne z rysunku (detekcja pasm ścian + OCR), edycja obrysu po zaznaczeniu (uchwyty wierzchołków, wymiary liczbowe, przeciągnięcie wnętrza przesuwa całe pomieszczenie bez zmiany kształtu), mieszkańcy na rzucie.
 3. Urządzenia i sieć: centrala, rozdzielacze, anemostaty, czerpnia, wyrzutnia, piony, kanały spiro i przewody FLX. Urządzenia wstawia się **przeciągnięciem karty** z szyny narzędzi na rzut albo kliknięciem karty i kliknięciem na rzucie. Przycisk **„Połącz z centralą”** buduje całą sieć automatycznie: anemostaty do rozdzielaczy, rozdzielacze do centrali (na innych kondygnacjach przez piony), czerpnia i wyrzutnia wprost do centrali.
 4. Obliczenia: bilans powietrza (PN-83/B-03430, WT §147–155), strefy dzień/noc, wymiarowanie przewodów, spręż, dobór centrali HRU, zestawienie materiałów, lista kontrolna zgodności.
-5. Widok 3D (aksonometria), symulator sterowania (Modbus / GATE) z pogodą z Open-Meteo jako warunkami zewnętrznymi, raport do wydruku z arkuszami rysunkowymi.
+5. Widok 3D (aksonometria na canvasie) i **3D+** (three.js): bryła ze ścianami o rzeczywistej grubości, otworami drzwiowymi i okiennymi, stropami i instalacją pod sufitem — z trybem zwiedzania z poziomu oczu (WASD + mysz). Symulator sterowania (Modbus / GATE) z pogodą z Open-Meteo jako warunkami zewnętrznymi, raport do wydruku z arkuszami rysunkowymi.
 6. Symulacja doby: przewijanie po wykresie (kursor zawsze stoi na danych), tempo od ×60 do ×2400, ikona dnia/nocy, pogoda zmieniająca się z godziną (prawdziwy odczyt z Open-Meteo nadaje poziom, przebieg doby jest modelowany i podpisany jako symulacja), profil obłożenia, CO₂ w pomieszczeniach jako dryfujący obłok, moc grzania powietrza, temperatura nawiewu i oszczędność z odzysku. Rysunek jest szary i ciemnieje na noc, a jedynym kolorem zostaje mgła CO₂. Mieszkańcy (biali, z miękkim cieniem) chodzą po domu według scenariusza doby — noc we własnych pokojach, rano kuchnia i łazienki, w dzień dom prawie pusty, wieczorem część dzienna — a między 17:30 a 21:30 wpadają goście.
 7. Przyciąganie (snap) przy rysowaniu, edycji i przesuwaniu pomieszczeń: narożniki i linie już wstawionych obrysów, ze znacznikiem pod kursorem.
 8. Styl wyświetlania („oczko”): wyróżnienie jednej warstwy — tylko kanały, tylko urządzenia, tylko pomieszczenia, tylko CO₂ — reszta rysunku szara i przy 20% krycia. Działa identycznie w 2D i 3D. „Tylko CO₂” bez danych CO₂ zostawia cały rysunek szary; dane dają symulacja doby albo podłączone sterowanie.
@@ -21,7 +21,9 @@ Aplikacja webowa 21 zmysłów do projektowania wentylacji mechanicznej z odzyski
 index.html            szkielet aplikacji (pasek górny, szyna narzędzi, scena, panel prawy)
 css/app.css           tokeny i komponenty 21 Apps Design System + skórki paneli silnika
 js/engine-core.js     dane normowe, stan, canvas 2D, obliczenia, panele, automatyka, raport
-js/engine-3d.js       aksonometria instalacji
+js/engine-3d.js       aksonometria instalacji (canvas 2D)
+js/engine-3dplus.js   widok 3D+ — bryła w three.js, zwiedzanie z poziomu oczu
+assets/vendor/three.module.min.js   three.js r170 (MIT), wciągnięty do repozytorium
 js/engine-ctrl.js     wirtualne sterowanie centralą (cyfrowy bliźniak)
 js/ui.js              nakładka UI: zwijane grupy narzędzi, pigułki kondygnacji, KPI, tytuł sceny
 js/dnd.js             przeciąganie kart urządzeń na rzut (Pointer Events, podgląd na canvasie)

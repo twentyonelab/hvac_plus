@@ -70,6 +70,7 @@ html,body{height:100%;margin:0}
 body{font:var(--type-body);font-size:var(--font-size-ui);color:var(--text-primary);background:var(--surface-page);display:flex;overflow:hidden;-webkit-font-smoothing:antialiased;min-width:1180px}
 button,input,select,textarea{font-family:var(--font-core)}
 a{color:var(--accent-primary-strong)}a:hover{color:var(--gray-900)}
+svg.i.flip{transform:scaleX(-1)}
 svg.i{width:16px;height:16px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
 
@@ -449,6 +450,25 @@ body.dnd,body.dnd *{cursor:grabbing !important}
 #simBtn.on{background:var(--accent-primary);color:var(--gray-900)}
 #simBtn .i{width:15px;height:15px}
 
+/* ---------- widok 3D+ (three.js) ---------- */
+#glwrap{position:absolute;inset:0;z-index:7;background:var(--surface-page)}
+#glcv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#glcv:active{cursor:grabbing}
+#glbar{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:8;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius-pill);background:var(--glass-fill);backdrop-filter:var(--blur-glass);-webkit-backdrop-filter:var(--blur-glass);box-shadow:var(--shadow-float)}
+.glb{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:none;border-radius:var(--radius-pill);background:transparent;color:var(--text-primary);font:var(--type-ui);font-size:12.5px;cursor:pointer;transition:var(--transition-control);white-space:nowrap}
+.glb:hover{background:var(--state-hover)}
+.glb.off{color:var(--text-tertiary);text-decoration:line-through}
+.glb.acc{background:var(--gray-900);color:var(--text-inverse)}
+.glb.acc.on{background:var(--accent-primary);color:var(--gray-900)}
+.glb .i{width:14px;height:14px}
+#glFloor{height:30px;border:none;border-radius:var(--radius-pill);background:var(--surface-card);font:var(--type-ui);font-size:12.5px;padding:0 8px;cursor:pointer}
+.gsep{width:1px;height:20px;background:var(--border-soft)}
+#glHint{position:absolute;left:50%;bottom:66px;transform:translateX(-50%);z-index:8;padding:8px 16px;border-radius:var(--radius-pill);background:var(--gray-900);color:var(--text-inverse);font:var(--type-meta);font-size:12px;box-shadow:var(--shadow-float)}
+#glHint b{font-weight:600}
+/* w 3D+ chowamy narzędzia rzutu, ale przełącznik widoku musi zostać — to nim się wraca */
+body.gl-on #vtoolsL .vgroup,body.gl-on #vtoolsL .vpop,body.gl-on #zoombar,body.gl-on #legend,
+body.gl-on #blStack,body.gl-on #hint,body.gl-on #simSheet,body.gl-on #simBtn{display:none}
+body.gl-on #vtoolsL{z-index:9}
 /* ---------- arkusz symulacji ---------- */
 #simSheet{position:absolute;left:14px;right:14px;bottom:14px;z-index:8;border-radius:var(--radius-panel);background:var(--glass-fill);backdrop-filter:var(--blur-glass);-webkit-backdrop-filter:var(--blur-glass);box-shadow:var(--shadow-float);padding:12px 16px 14px;animation:simUp .32s var(--ease-out-soft)}
 @keyframes simUp{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}

@@ -93,6 +93,8 @@
         <div class="tgroup-h"><span class="t">Podkład</span><span class="n">1</span><span class="chev"><svg class="i"><use href="#i-chevron"/></svg></span></div>
         <div class="tgroup-b">
           <button class="tbtn" data-tool="calib"><span class="ic"><svg class="i"><use href="#i-ruler"/></svg></span>Kalibracja skali</button>
+          <button class="tbtn" id="btnRotL" title="Obróć całą kondygnację o 90° w lewo (podkład, obrysy, instalacja)"><span class="ic"><svg class="i flip"><use href="#i-rotate"/></svg></span>Obróć w lewo 90°</button>
+          <button class="tbtn" id="btnRotR" title="Obróć całą kondygnację o 90° w prawo (podkład, obrysy, instalacja)"><span class="ic"><svg class="i"><use href="#i-rotate"/></svg></span>Obróć w prawo 90°</button>
         </div>
       </section>
 
@@ -196,6 +198,22 @@
       </div>
       <div id="canvaswrap">
         <canvas id="cv"></canvas>
+        <div id="glwrap" hidden>
+          <canvas id="glcv"></canvas>
+          <div id="glbar">
+            <button type="button" class="glb acc" id="glWalk"><svg class="i"><use href="#i-user"/></svg>Zwiedzaj</button>
+            <select id="glFloor" title="Kondygnacja"></select>
+            <span class="gsep"></span>
+            <button type="button" class="glb" data-lay="walls">Ściany</button>
+            <button type="button" class="glb" data-lay="net">Instalacja</button>
+            <button type="button" class="glb" data-lay="rooms">Podłogi</button>
+            <button type="button" class="glb" data-lay="people">Mieszkańcy</button>
+            <span class="gsep"></span>
+            <button type="button" class="glb" id="glFit"><svg class="i"><use href="#i-fit"/></svg>Dopasuj</button>
+            <button type="button" class="glb" id="glClose"><svg class="i"><use href="#i-x2"/></svg>Rzut</button>
+          </div>
+          <div id="glHint" hidden><b>WASD</b> chodzenie · <b>mysz</b> rozglądanie · <b>Shift</b> szybciej · <b>Esc</b> wyjście</div>
+        </div>
         <div id="dropzone"><div class="dz-inner" id="dzInner">
           <div class="dz-ic"><svg class="i"><use href="#i-image"/></svg></div>
           <h2>Wgraj rzut kondygnacji</h2>
@@ -207,6 +225,7 @@
           <div class="vseg" id="modeSwitch" role="tablist" aria-label="Rodzaj widoku">
             <button type="button" data-mode="2d" class="active" role="tab">2D</button>
             <button type="button" data-mode="3d" role="tab">3D</button>
+            <button type="button" data-mode="3dp" role="tab" title="Widok bryłowy: ściany, otwory, instalacja — z możliwością wejścia do środka">3D+</button>
           </div>
           <div class="vgroup">
             <button type="button" class="vbtn" id="camBtn" data-pop="camPop" title="Widok i kamera" aria-label="Widok i kamera"><svg class="i"><use href="#i-box"/></svg></button>
@@ -394,5 +413,6 @@
 <script src="js/weather.js"></script>
 <script src="js/dnd.js"></script>
 <script src="js/sim.js"></script>
+<script type="module" src="js/engine-3dplus.js"></script>
 </body>
 </html>

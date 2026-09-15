@@ -2626,6 +2626,55 @@ function placeInRoom(pts,n,avoid){
   return chosen;
 }
 
+/* ======= OBRÓT KONDYGNACJI O 90° =======
+   Rzut wgrany bokiem (pionowa strona kartki, skan obrócony) trzeba dało się
+   ustawić bez wychodzenia z programu. Obracamy CAŁĄ kondygnację — podkład,
+   obrysy pomieszczeń, węzły, załamania przewodów i obszar analizy — więc
+   wszystko zostaje na swoim miejscu względem rysunku. Skala (px/m) się nie
+   zmienia, bo obrót jej nie dotyczy. */
+async function rotateFloor(cw){
+  const f=F(); if(!f) return;
+  /* pudełko źródłowe: podkład, a bez podkładu obwiednia geometrii */
+  let W,H,ox=0,oy=0;
+  if(f.bg&&f.bgW&&f.bgH){ W=f.bgW; H=f.bgH; }
+  else{
+    const pts=[...f.rooms.flatMap(r=>r.pts),...f.nodes,...f.segs.flatMap(s=>s.pts||[])];
+    if(!pts.length){ toast('Na tej kondygnacji nie ma czego obracać.'); return; }
+    const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+    ox=Math.min(...xs); oy=Math.min(...ys);
+    W=Math.max(...xs)-ox; H=Math.max(...ys)-oy;
+  }
+  /* w prawo: (u,v) → (H−v, u);  w lewo: (u,v) → (v, W−u) */
+  const rot = cw ? (p)=>({x: ox + H-(p.y-oy), y: oy + (p.x-ox)})
+                 : (p)=>({x: ox + (p.y-oy),   y: oy + W-(p.x-ox)});
+  setHint('Obracam kondygnację…'); await new Promise(r=>setTimeout(r,20));
+  snapshot();
+  const move=o=>{ const q=rot(o); o.x=q.x; o.y=q.y; };
+  f.rooms.forEach(r=>r.pts.forEach(move));
+  f.nodes.forEach(move);
+  f.segs.forEach(s=>(s.pts||[]).forEach(move));
+  if(f.roi){
+    const a=rot({x:f.roi.x0,y:f.roi.y0}), b=rot({x:f.roi.x1,y:f.roi.y1});
+    f.roi={x0:Math.min(a.x,b.x),y0:Math.min(a.y,b.y),x1:Math.max(a.x,b.x),y1:Math.max(a.y,b.y)};
+  }
+  if(f.bg){
+    const img=await new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=f.bg; }).catch(()=>null);
+    if(img){
+      const c=document.createElement('canvas'); c.width=img.naturalHeight; c.height=img.naturalWidth;
+      const g=c.getContext('2d');
+      if(cw){ g.translate(c.width,0); g.rotate(Math.PI/2); } else { g.translate(0,c.height); g.rotate(-Math.PI/2); }
+      g.drawImage(img,0,0);
+      f.bg=c.toDataURL('image/png'); f.bgW=c.width; f.bgH=c.height; f.bgPrevK=1; f.maskPrev=null;
+      delete bgCache[f.id];
+    }
+  }
+  maskCache.key=null; setHint('');
+  refreshAll(); fitView();
+  toast(`Kondygnacja „${f.name}” obrócona o 90° w ${cw?'prawo':'lewo'}. Skala bez zmian — cofnij, jeśli to nie ten kierunek.`);
+}
+document.getElementById('btnRotL').addEventListener('click',()=>rotateFloor(false));
+document.getElementById('btnRotR').addEventListener('click',()=>rotateFloor(true));
+
 function setROI(a,b){
   const f=F();
   f.roi={x0:Math.min(a.x,b.x),y0:Math.min(a.y,b.y),x1:Math.max(a.x,b.x),y1:Math.max(a.y,b.y)};
