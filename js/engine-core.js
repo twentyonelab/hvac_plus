@@ -1677,29 +1677,28 @@ function autoDetectDialog(){
   dlg.innerHTML=`<h3>Rozpoznawanie pomieszczeń</h3>
   <div class="field"><label>Czułość (próg jasności kreski)</label><input type="range" id="ddT" min="80" max="235" value="${f.detT||190}" style="width:130px"><span id="ddTv" style="font-size:11.5px;width:26px;display:inline-block">${f.detT||190}</span></div>
   <div class="field"><label>Maks. grubość ściany [m]</label><input type="number" id="ddWM" min="0.1" max="0.7" step="0.05" value="0.3" style="width:70px"></div>
-  <div class="field"><label>Domknij otwory bez skrzydeł [m]</label><input type="number" id="ddG" min="0" max="1.5" step="0.05" value="0" style="width:70px"></div>
+  <div class="field"><label>Domykaj otwory drzwiowe do [m]</label><input type="number" id="ddD" min="0" max="2" step="0.1" value="${f.detDoor??1.0}" style="width:70px"></div>
   <div class="field"><label>Min. powierzchnia pomieszczenia [m²]</label><input type="number" id="ddA" min="0.5" step="0.5" value="1.5" style="width:70px"></div>
   <div class="field"><label>Min. szerokość w świetle [m]</label><input type="number" id="ddI" min="0.3" step="0.1" value="0.6" style="width:70px"></div>
-  <div class="field"><label>Tylko obszary ograniczone ścianami</label><input type="checkbox" id="ddWB"></div>
   <div class="field"><label>Prostuj obrysy do figur prostokątnych</label><input type="checkbox" id="ddR" checked></div>
   <div class="field"><label>Czytaj opisy i zestawienie pomieszczeń (OCR)</label><input type="checkbox" id="ddO" checked></div>
   <div class="field"><label>Usuń istniejące obrysy</label><input type="checkbox" id="ddC" checked></div>
-  <p class="note"><b>Kolejność pracy:</b> 1) kalibracja skali, 2) narzędzie <b>„Obszar analizy”</b> — dwoma kliknięciami obejmij sam budynek (bez łańcuchów wymiarowych, osi i tabeli rysunkowej), 3) „Rozpoznaj”. Bez wskazanego obszaru program próbuje wyznaczyć go sam, ale na rysunkach z gęstą wymiarówką bywa to zawodne.</p>
-  <p class="note">Przegrodą są <b>wszystkie kreski rysunku</b> — ościeżnice i skrzydła drzwi zamykają otwory, więc ściany kreskowane (dwie cienkie linie) też działają poprawnie. Łańcuchy wymiarowe, osie i tabela rysunkowa są odrzucane przez automatyczne obcięcie do obwiedni budynku. „Domknij otwory” użyj tylko wtedy, gdy na rzucie są otwory bez skrzydeł (przejścia bez drzwi) i pomieszczenia się zlewają.</p>
-  <p class="note">Gdy rzut jest nietypowy — użyj narzędzia <b>„Klik: pomieszczenie”</b> i klikaj wnętrza pomieszczeń pojedynczo. Podgląd „Maska ścian” pokazuje, co program widzi jako przegrodę.</p>
+  <p class="note"><b>Kolejność pracy:</b> 1) kalibracja skali, 2) „Rozpoznaj”. Obszar analizy (narzędzie w grupie Automatyzacja) przydaje się tylko wtedy, gdy na arkuszu jest kilka rysunków albo bardzo rozbudowana tabela — normalnie program sam znajduje bryłę budynku.</p>
+  <p class="note">Program szuka <b>pasm ścian</b>: ściana jest albo wypełniona (czarna, kreskowana, szara), albo narysowana dwiema równoległymi liniami odległymi o jej grubość. Łańcuchy wymiarowe, osie kreskowo-punktowe, opisy, meble i łuki drzwi nie mają takiego towarzysza, więc <b>nie dzielą pomieszczeń</b>. Otwory drzwiowe domykane są morfologicznie do podanej szerokości, a potem obrysy rosną z powrotem do rzeczywistych ścian — dlatego pomieszczenie odzyskuje ościeża i powierzchnię pod zabudową.</p>
+  <p class="note">Gdy rzut jest nietypowy — użyj narzędzia <b>„Klik: pomieszczenie”</b> i klikaj wnętrza pojedynczo. Podgląd „Maska ścian” pokazuje, co program uznał za ścianę (granatowe) i jak podzielił rysunek.</p>
   <div style="text-align:right;margin-top:10px">
     <button class="btn" id="ddPrev">Podgląd maski</button>
     <button class="btn" id="ddCancel">Anuluj</button>
     <button class="btn acc" id="ddRun">Rozpoznaj</button></div>`;
   document.body.appendChild(dlg);
-  const rd=()=>({ thresh:+dlg.querySelector('#ddT').value, gapM:+dlg.querySelector('#ddG').value,
+  const rd=()=>({ thresh:+dlg.querySelector('#ddT').value, gapM:0, doorW:+dlg.querySelector('#ddD').value,
     minArea:+dlg.querySelector('#ddA').value, minInr:+dlg.querySelector('#ddI').value,
     rect:dlg.querySelector('#ddR').checked, ocr:dlg.querySelector('#ddO').checked, clear:dlg.querySelector('#ddC').checked,
-    wallBounded:dlg.querySelector('#ddWB').checked, wallM:+dlg.querySelector('#ddWM').value });
+    wallM:+dlg.querySelector('#ddWM').value });
   dlg.querySelector('#ddT').addEventListener('input',e=>{ dlg.querySelector('#ddTv').textContent=e.target.value; });
   dlg.querySelector('#ddCancel').addEventListener('click',()=>dlg.close());
   dlg.querySelector('#ddPrev').addEventListener('click',async()=>{ const o=rd(); F().detT=o.thresh; await showMaskPreview(o); });
-  dlg.querySelector('#ddRun').addEventListener('click',async()=>{ const o=rd(); F().detT=o.thresh; dlg.close(); await detectRooms(o); });
+  dlg.querySelector('#ddRun').addEventListener('click',async()=>{ const o=rd(); F().detT=o.thresh; F().detDoor=o.doorW; dlg.close(); await detectRooms(o); });
   dlg.showModal();
 }
 
@@ -1708,9 +1707,154 @@ const maskCache={};
 function loadBgImage(f){
   return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error('nie można odczytać podkładu')); im.src=f.bg; });
 }
+/* długość ciągu tuszu przechodzącego przez piksel — w poziomie i w pionie, O(N) */
+function runLenX(ink,W,H){
+  const r=new Uint16Array(W*H);
+  for(let y=0;y<H;y++){ const off=y*W; let x=0;
+    while(x<W){ if(!ink[off+x]){x++;continue;} let j=x; while(j<W&&ink[off+j])j++;
+      const L=Math.min(65535,j-x); for(let q=x;q<j;q++) r[off+q]=L; x=j; } }
+  return r;
+}
+function runLenY(ink,W,H){
+  const r=new Uint16Array(W*H);
+  for(let x=0;x<W;x++){ let y=0;
+    while(y<H){ if(!ink[y*W+x]){y++;continue;} let j=y; while(j<H&&ink[j*W+x])j++;
+      const L=Math.min(65535,j-y); for(let q=y;q<j;q++) r[q*W+x]=L; y=j; } }
+  return r;
+}
+/* ============ ŚCIANY TO PASMA, NIE POJEDYNCZE KRESKI ============
+   Na rzucie architektonicznym ściana jest zawsze jednym z trzech:
+   a) pasmem wypełnionym — czarnym albo szarym (test: kreska gruba w OBU osiach,
+      liczony na „wszystkim, co nie jest bielą”, bo wypełnienie bywa jasnoszare),
+   b) pasmem kreskowanym albo narysowanym DWIEMA równoległymi liniami odległymi
+      o grubość ściany (test: równoległy towarzysz w odległości ≤ grubość ściany),
+   c) kombinacją obu.
+   Łańcuchy wymiarowe, osie kreskowo-punktowe, opisy, meble, łuki i skrzydła drzwi
+   nie spełniają żadnego z tych warunków albo dają drobne wysepki, które odcina
+   filtr długości. Wcześniej przegrodą był CAŁY rysunek — stąd pomieszczenia
+   posiekane na kawałki przez wymiarówkę i meble. */
+function wallMask(inkDark,inkLoose,W,H,ppm,wallM){
+  const N=W*H;
+  const tW=Math.max(2,Math.round(0.055*ppm));      // od tej grubości pasmo jest ścianą
+  const out=new Uint8Array(N);
+  // a) WYPEŁNIENIE — grube w obu osiach (ściana czarna, szara, ciemna)
+  const rx=runLenX(inkLoose,W,H), ry=runLenY(inkLoose,W,H);
+  for(let i=0;i<N;i++) if(inkLoose[i]&&rx[i]>=tW&&ry[i]>=tW) out[i]=1;
+  // b) KRESKOWANIE — gęsty deseń cienkich kresek
+  const dens=densityMask(inkDark,W,H,Math.max(3,Math.round(0.20*ppm)),0.24);
+  for(let i=0;i<N;i++) if(dens[i]&&inkDark[i]) out[i]=1;
+  return out;
+}
+/* Awaryjnie — rysunek czysto liniowy: ściana narysowana DWIEMA równoległymi
+   liniami bez wypełnienia. Test szuka równoległego towarzysza w odległości
+   ≤ grubości ściany. Jest czuły (meble też bywają parą linii), więc włącza się
+   tylko wtedy, gdy wypełnienie i kreskowanie nie znalazły prawie nic. */
+function wallPairs(inkDark,W,H,ppm,wallM){
+  const N=W*H, out=new Uint8Array(N);
+  const tW=Math.max(2,Math.round(0.055*ppm));
+  const maxGap=Math.max(2,Math.round(wallM*ppm));
+  for(let x=0;x<W;x++){
+    const runs=[]; let y=0;
+    while(y<H){ if(!inkDark[y*W+x]){y++;continue;} let j=y; while(j<H&&inkDark[j*W+x])j++; runs.push(y,j-1); y=j; }
+    for(let t=0;t<runs.length;t+=2){
+      const r0=runs[t], r1=runs[t+1]; if(r1-r0+1>=tW) continue;
+      if((t>0&&(r0-runs[t-1]-1)<=maxGap)||(t+2<runs.length&&(runs[t+2]-r1-1)<=maxGap))
+        for(let q=r0;q<=r1;q++) out[q*W+x]=1;
+    } }
+  for(let y=0;y<H;y++){
+    const off=y*W, runs=[]; let x=0;
+    while(x<W){ if(!inkDark[off+x]){x++;continue;} let j=x; while(j<W&&inkDark[off+j])j++; runs.push(x,j-1); x=j; }
+    for(let t=0;t<runs.length;t+=2){
+      const r0=runs[t], r1=runs[t+1]; if(r1-r0+1>=tW) continue;
+      if((t>0&&(r0-runs[t-1]-1)<=maxGap)||(t+2<runs.length&&(runs[t+2]-r1-1)<=maxGap))
+        for(let q=r0;q<=r1;q++) out[off+q]=1;
+    } }
+  return out;
+}
+/* Opisy, cyfry wymiarówki, kreski osi kreskowo-punktowych i drobne symbole to
+   WOLNOSTOJĄCE plamki tuszu. Prawdziwa ściana zawsze łączy się z resztą
+   konstrukcji, więc nigdy nie jest taką plamką — można je usunąć przed analizą.
+   To jeden z dwóch kroków, bez których napis „SYPIALNIA 12,47 m²” zamieniał się
+   w ścianę na środku pokoju. */
+function dropSpecks(ink,W,H,maxBox){
+  const N=W*H, lab=new Uint8Array(N), out=new Uint8Array(N);
+  for(let s0=0;s0<N;s0++){
+    if(!ink[s0]||lab[s0]) continue;
+    const st=[s0], cc=[s0]; lab[s0]=1;
+    let x0=s0%W,x1=x0,y0=(s0/W)|0,y1=y0;
+    while(st.length){ const i=st.pop(), x=i%W, y=(i/W)|0;
+      if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const nx=x+dx, ny=y+dy; if(nx<0||ny<0||nx>=W||ny>=H) continue;
+        const j=ny*W+nx; if(ink[j]&&!lab[j]){ lab[j]=1; st.push(j); cc.push(j); } } }
+    if(Math.max(x1-x0+1,y1-y0+1)>=maxBox) for(const j of cc) out[j]=1;
+  }
+  return out;
+}
+/* Ściana jest długa. Cokolwiek krótszego niż `minLen` (opisy, kratki mebli,
+   krzyżyki wymiarówki, symbole) nie jest konstrukcją i nie może dzielić rzutu. */
+function dropShort(m,W,H,minLen){
+  const N=W*H, lab=new Int32Array(N), keep=new Uint8Array(N);
+  let id=0;
+  for(let s0=0;s0<N;s0++){
+    if(!m[s0]||lab[s0]) continue;
+    id++; const st=[s0], cc=[s0]; lab[s0]=id;
+    let x0=s0%W,x1=x0,y0=(s0/W)|0,y1=y0;
+    while(st.length){ const i=st.pop(), x=i%W, y=(i/W)|0;
+      if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const nx=x+dx, ny=y+dy; if(nx<0||ny<0||nx>=W||ny>=H) continue;
+        const j=ny*W+nx; if(m[j]&&!lab[j]){ lab[j]=id; st.push(j); cc.push(j); } } }
+    if(Math.max(x1-x0+1,y1-y0+1)>=minLen) for(const j of cc) keep[j]=1;
+  }
+  return keep;
+}
+/* Kreskowanie ściany to gęsty deseń cienkich kresek. Liczymy udział tuszu
+   w oknie wielkości ~0,2 m (obraz sumacyjny, O(N)) — kreskowanie ma go kilka
+   razy więcej niż meble czy schody rysowane pojedynczymi liniami. */
+function densityMask(ink,W,H,win,thr){
+  const S=W+1, I=new Int32Array(S*(H+1));
+  for(let y=0;y<H;y++){ let row=0;
+    for(let x=0;x<W;x++){ row+=ink[y*W+x]; I[(y+1)*S+x+1]=I[y*S+x+1]+row; } }
+  const r=Math.max(1,win>>1), out=new Uint8Array(W*H);
+  for(let y=0;y<H;y++){ const y0=Math.max(0,y-r), y1=Math.min(H-1,y+r);
+    for(let x=0;x<W;x++){ const x0=Math.max(0,x-r), x1=Math.min(W-1,x+r);
+      const sum=I[(y1+1)*S+x1+1]-I[y0*S+x1+1]-I[(y1+1)*S+x0]+I[y0*S+x0];
+      if(sum>=thr*(x1-x0+1)*(y1-y0+1)) out[y*W+x]=1; } }
+  return out;
+}
+/* DOMYKANIE OTWORÓW (drzwi, przejścia, okna bez rysunku ościeżnicy).
+   Domknięcie morfologiczne tu nie działa: żeby zmostkować 0,9 m między dwiema
+   ścianami grubości 0,26 m, promień musiałby być większy niż sam otwór, a wtedy
+   znikają wąskie pomieszczenia. Zamiast tego mostkujemy KIERUNKOWO: lukę wolno
+   zasklepić tylko wtedy, gdy po obu jej stronach stoi ta sama ściana przecięta
+   w poprzek — czyli gdy jej grubość mierzona prostopadle jest grubością ściany,
+   a nie długością korytarza. Dzięki temu drzwi się domykają, a korytarz nie. */
+function bridgeOpenings(walls,W,H,doorPx,maxThickPx){
+  const out=Uint8Array.from(walls);
+  const rx=runLenX(walls,W,H), ry=runLenY(walls,W,H);
+  for(let y=0;y<H;y++){ const off=y*W; let x=0;
+    while(x<W){
+      if(walls[off+x]){ x++; continue; }
+      let j=x; while(j<W&&!walls[off+j]) j++;
+      if(x>0&&j<W&&(j-x)<=doorPx && ry[off+x-1]<=maxThickPx && ry[off+j]<=maxThickPx)
+        for(let q=x;q<j;q++) out[off+q]=1;
+      x=j;
+    } }
+  for(let x=0;x<W;x++){ let y=0;
+    while(y<H){
+      if(walls[y*W+x]){ y++; continue; }
+      let j=y; while(j<H&&!walls[j*W+x]) j++;
+      if(y>0&&j<H&&(j-y)<=doorPx && rx[(y-1)*W+x]<=maxThickPx && rx[j*W+x]<=maxThickPx)
+        for(let q=y;q<j;q++) out[q*W+x]=1;
+      y=j;
+    } }
+  return out;
+}
 async function buildMask(opt){
   const f=F();
-  const key=f.id+'|'+(f.bg?f.bg.length:0)+'|'+opt.thresh+'|'+opt.gapM+'|'+(opt.wallM||0.30)+'|'+f.pxPerM;
+  const doorW=(opt.doorW==null?1.0:opt.doorW);
+  const key=f.id+'|'+(f.bg?f.bg.length:0)+'|'+opt.thresh+'|'+opt.gapM+'|'+(opt.wallM||0.30)+'|'+doorW+'|'+f.pxPerM;
   if(maskCache.key===key) return maskCache.val;
   const im=await loadBgImage(f);
   f.bgW=im.naturalWidth; f.bgH=im.naturalHeight;
@@ -1722,62 +1866,112 @@ async function buildMask(opt){
   octx.fillStyle='#fff'; octx.fillRect(0,0,W,H); octx.drawImage(im,0,0,W,H);
   const px=octx.getImageData(0,0,W,H).data, N=W*H;
   const ppm=f.pxPerM*k;                       // px na metr w obrazie roboczym
-  // 1) tusz
-  let ink=new Uint8Array(N);
-  for(let i=0;i<N;i++){ const g=px[i*4]*0.3+px[i*4+1]*0.59+px[i*4+2]*0.11;
-    if((g<opt.thresh&&px[i*4+3]>60)||px[i*4+3]<40) ink[i]=1; }
-  // 2) opcjonalne domknięcie otworów bez skrzydeł
-  if(opt.gapM>0) ink=mClose(ink,W,H,Math.max(1,opt.gapM*ppm/2));
-  // 4) ŚCIANY: domknięcie 0,15 m scala ściany rysowane dwiema liniami (także kreskowane),
-  //    otwarcie 0,06 m usuwa cienkie kreski (wymiarówki, tabela rysunkowa, meble, osie, teksty).
-  // domknięcie o połowę maks. grubości ściany scala ściany rysowane dwiema liniami
-  // (także kreskowane / z wypełnieniem), otwarcie usuwa cienkie kreski rysunku
-  const rClose=Math.max(1,0.5*(opt.wallM||0.30)*ppm), rOpen=Math.max(1,0.03*ppm);
-  const thick=mDilate(mErode(mClose(ink,W,H,rClose),W,H,rOpen),W,H,rOpen);
-  const thickNear=mDilate(thick,W,H,Math.max(2,0.12*ppm));
-  // 4b) PRZEGRODA = ściany + tylko te kreski, które ich DOTYKAJĄ:
-  //     ościeżnice, skrzydła i łuki drzwi, linie okien (zamykają otwory),
-  //     natomiast wolnostojące meble, schody, opisy i osie NIE dzielą pomieszczeń.
-  const band=mDilate(thick,W,H,Math.max(1,0.05*ppm));
-  const part=new Uint8Array(N), seenI=new Uint8Array(N);
-  for(let s0=0;s0<N;s0++){
-    if(!ink[s0]||seenI[s0]) continue;
-    const st=[s0]; seenI[s0]=1; const cc=[s0]; let hit=!!band[s0];
-    while(st.length){ const i=st.pop(), x=i%W, y=(i/W)|0;
-      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
-        const nx=x+dx, ny=y+dy; if(nx<0||ny<0||nx>=W||ny>=H) continue;
-        const j=ny*W+nx; if(ink[j]&&!seenI[j]){ seenI[j]=1; if(band[j])hit=true; cc.push(j); st.push(j); } } }
-    if(hit) for(const j of cc) part[j]=1;
-  }
-  // 4c) obszar zewnętrzny (poza rysunkiem)
+  // 1) tusz w dwóch progach: kreski (ciemny) i wszystko, co nie jest bielą (luźny).
+  //    Luźny próg jest po to, żeby ściany z JASNOSZARYM wypełnieniem w ogóle
+  //    zostały zauważone — na progu kresek szarość 200 jest niewidoczna.
+  let ink=new Uint8Array(N), inkLoose=new Uint8Array(N);
+  /* poziom tła z histogramu — skan bywa szarawy, a wtedy sztywny próg 238
+     uznałby cały arkusz za wypełnienie ściany */
+  const hist=new Int32Array(256);
+  for(let i=0;i<N;i++){ const g=px[i*4]*0.3+px[i*4+1]*0.59+px[i*4+2]*0.11; hist[g|0]++; }
+  let bg=255,bc=-1; for(let v=128;v<256;v++) if(hist[v]>bc){ bc=hist[v]; bg=v; }
+  const looseT=Math.max(opt.thresh+5, Math.min(238, bg-10));
+  for(let i=0;i<N;i++){ const g=px[i*4]*0.3+px[i*4+1]*0.59+px[i*4+2]*0.11, op=px[i*4+3];
+    if((g<opt.thresh&&op>60)||op<40) ink[i]=1;
+    if((g<looseT&&op>60)||op<40) inkLoose[i]=1; }
+  // 2) opcjonalne domknięcie przed analizą (rysunki z przerwanymi liniami)
+  if(opt.gapM>0){ const r=Math.max(1,opt.gapM*ppm/2);
+    ink=mClose(ink,W,H,r); inkLoose=mClose(inkLoose,W,H,r); }
+  // 3) usunięcie wolnostojących plamek: opisy, cyfry, kreski osi, drobne symbole
+  const speckBox=Math.max(3,Math.round(0.45*ppm));
+  const keep=dropSpecks(inkLoose,W,H,speckBox);
+  for(let i=0;i<N;i++) if(!keep[i]){ ink[i]=0; inkLoose[i]=0; }
+  // 4) ściany — tylko konstrukcja, bez adnotacji i mebli
+  const wallM=opt.wallM||0.30;
+  let band=wallMask(ink,inkLoose,W,H,ppm,wallM);
+  let bandPx=0; for(let i=0;i<N;i++) bandPx+=band[i];
+  if(bandPx < 0.012*N){            // rysunek czysto liniowy — awaryjny test pary linii
+    const pr=wallPairs(ink,W,H,ppm,wallM);
+    band=new Uint8Array(N); for(let i=0;i<N;i++) band[i]= (pr[i]||0); }
+  // 5) bryła ściany: scalenie kreskowania i dwóch linii w jedno pasmo,
+  //    a potem odrzucenie wszystkiego, co za krótkie, by być ścianą
+  const walls=dropShort(mClose(band,W,H,Math.max(1,0.5*wallM*ppm)),W,H,Math.max(4,0.8*ppm));
+  // 6) przegroda do wyznaczania pomieszczeń: otwory drzwiowe domknięte
+  const barrier= doorW>0
+    ? bridgeOpenings(walls,W,H,Math.round(doorW*ppm),Math.round(1.7*wallM*ppm))
+    : walls;
+  // 7) obszar zewnętrzny (poza bryłą) — liczony na przegrodzie
   const outside=new Uint8Array(N); const Q=[];
-  const push=i=>{ if(!part[i]&&!outside[i]){ outside[i]=1; Q.push(i); } };
+  const push=i=>{ if(!barrier[i]&&!outside[i]){ outside[i]=1; Q.push(i); } };
   for(let x=0;x<W;x++){ push(x); push((H-1)*W+x); }
   for(let y=0;y<H;y++){ push(y*W); push(y*W+W-1); }
   while(Q.length){ const i=Q.pop(), x=i%W, y=(i/W)|0;
     if(x>0)push(i-1); if(x<W-1)push(i+1); if(y>0)push(i-W); if(y<H-1)push(i+W); }
-  const dFree=chamferDist(part,W,H,1);   // odległość do najbliższej kreski (promień wpisany)
-  const val={W,H,k,ppm,ink:part,inkRaw:ink,outside,thick,thickNear,dFree,canvas:oc};
+  const dFree=chamferDist(walls,W,H,1);   // odległość do najbliższej ściany (promień wpisany)
+  const thickNear=mDilate(walls,W,H,Math.max(2,0.12*ppm));
+  const val={W,H,k,ppm,ink:walls,inkRaw:ink,inkLoose,band,walls,barrier,outside,thick:walls,thickNear,dFree,canvas:oc};
   maskCache.key=key; maskCache.val=val;
   return val;
 }
-/* etykietowanie wszystkich zamkniętych regionów rysunku */
+/* Etykietowanie pomieszczeń w dwóch krokach:
+   1) JĄDRA — spójne obszary wolne od przegrody (ściany + domknięte otwory).
+      Domknięcie odcina sąsiadów przez drzwi, ale zjada ościeża i narożniki.
+   2) ROZROST — jądra rosną jednocześnie do rzeczywistych ścian, więc każde
+      pomieszczenie odzyskuje pełną geometrię, a granica między sąsiadami
+      wypada dokładnie w połowie otworu. Przy okazji rozrost wchłania
+      powierzchnię pod meblami, bo meble nie są już przegrodą. */
 function labelRegions(M){
-  const {W,H,ink,outside,dFree}=M, N=W*H;
-  const lab=new Int32Array(N);
-  for(let i=0;i<N;i++) lab[i]= ink[i]?-2 : (outside[i]?-1:0);
-  const comps=[]; let id=0;
+  const {W,H,barrier,walls,outside,dFree}=M, N=W*H;
+  const core=new Int32Array(N);
+  for(let i=0;i<N;i++) core[i]= barrier[i]? -2 : (outside[i]? -1 : 0);
+  let id=0;
   for(let s=0;s<N;s++){
-    if(lab[s]!==0) continue;
-    id++; const st=[s]; lab[s]=id; let cnt=0,minx=W,maxx=0,miny=H,maxy=0,inr=0;
-    while(st.length){ const i=st.pop(); cnt++; const x=i%W,y=(i/W)|0;
-      if(dFree&&dFree[i]>inr) inr=dFree[i];
-      if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y;
-      if(x>0&&lab[i-1]===0){lab[i-1]=id;st.push(i-1);} if(x<W-1&&lab[i+1]===0){lab[i+1]=id;st.push(i+1);}
-      if(y>0&&lab[i-W]===0){lab[i-W]=id;st.push(i-W);} if(y<H-1&&lab[i+W]===0){lab[i+W]=id;st.push(i+W);} }
-    comps.push({id,cnt,minx,maxx,miny,maxy,inr});
+    if(core[s]!==0) continue;
+    id++; const st=[s]; core[s]=id;
+    while(st.length){ const i=st.pop(), x=i%W, y=(i/W)|0;
+      if(x>0&&core[i-1]===0){core[i-1]=id;st.push(i-1);} if(x<W-1&&core[i+1]===0){core[i+1]=id;st.push(i+1);}
+      if(y>0&&core[i-W]===0){core[i-W]=id;st.push(i-W);} if(y<H-1&&core[i+W]===0){core[i+W]=id;st.push(i+W);} }
   }
-  return {lab,comps};
+  const lab=new Int32Array(N), q=new Int32Array(N); let qn=0;
+  for(let i=0;i<N;i++){
+    if(walls[i]){ lab[i]=-2; continue; }
+    const c=core[i];
+    lab[i]= (c===-2)? 0 : c;                  // wnętrze domknięcia wraca do rozrostu
+    if(lab[i]!==0) q[qn++]=i;
+  }
+  for(let head=0;head<qn;head++){
+    const i=q[head], v=lab[i], x=i%W, y=(i/W)|0;
+    if(x>0&&lab[i-1]===0){ lab[i-1]=v; q[qn++]=i-1; }
+    if(x<W-1&&lab[i+1]===0){ lab[i+1]=v; q[qn++]=i+1; }
+    if(y>0&&lab[i-W]===0){ lab[i-W]=v; q[qn++]=i-W; }
+    if(y<H-1&&lab[i+W]===0){ lab[i+W]=v; q[qn++]=i+W; }
+  }
+  /* Scalanie fałszywych podziałów. Dwa obszary mogą się stykać tylko tam, gdzie
+     nie ma ściany — czyli albo w domkniętym otworze drzwiowym (granica prawdziwa),
+     albo na linii, którą wyznaczył mebel dzielący jądro pomieszczenia (granica
+     fałszywa). Jeśli styk w większości NIE leży w domkniętym otworze, obszary
+     należą do jednego pomieszczenia. */
+  const par={}, find=a=>{ while(par[a]!=null&&par[a]!==a) a=par[a]=par[par[a]]??par[a]; return a; };
+  const uni=(a,b)=>{ a=find(a); b=find(b); if(a!==b) par[b]=a; };
+  const pair={};
+  const touch=(i,j)=>{ const A=lab[i], B=lab[j];
+    if(A<=0||B<=0||A===B) return;
+    const key=A<B? A+'_'+B : B+'_'+A;
+    const e=pair[key]||(pair[key]={n:0,br:0});
+    e.n++; if(barrier[i]||barrier[j]) e.br++; };
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){ const i=y*W+x;
+    if(x<W-1) touch(i,i+1); if(y<H-1) touch(i,i+W); }
+  Object.entries(pair).forEach(([k,e])=>{
+    if(e.br/e.n<0.25){ const [a,b]=k.split('_').map(Number); uni(a,b); } });
+  for(let i=0;i<N;i++) if(lab[i]>0){ const r=find(lab[i]); if(r!==lab[i]) lab[i]=r; }
+  const st={};
+  for(let i=0;i<N;i++){ const L=lab[i]; if(L<=0) continue;
+    let c=st[L]; if(!c) c=st[L]={id:L,cnt:0,minx:W,maxx:0,miny:H,maxy:0,inr:0};
+    const x=i%W, y=(i/W)|0;
+    c.cnt++; if(x<c.minx)c.minx=x; if(x>c.maxx)c.maxx=x; if(y<c.miny)c.miny=y; if(y>c.maxy)c.maxy=y;
+    if(dFree&&dFree[i]>c.inr) c.inr=dFree[i];
+  }
+  return {lab,comps:Object.values(st)};
 }
 /* OBSZAR ANALIZY: pomieszczenia budynku tworzą jedną gęstą grupę (sąsiadują przez
    ściany 0,12–0,25 m). Komórki łańcuchów wymiarowych, tabela rysunkowa i legenda
@@ -1855,16 +2049,36 @@ function grab(G,rs){                       // ile obcych pikseli zagarnia zestaw
   for(const r of rs) for(let y=r.y0;y<=r.y1;y++)for(let x=r.x0;x<=r.x1;x++){ tot++; if(G.oth[y*G.w+x]) bad++; }
   return tot? bad/tot : 1;
 }
+/* Prostokąt odporny na wypustki. Obrys pomieszczenia ma „języki” wchodzące
+   w ościeża drzwi i we wnęki okienne — prostokąt opisany na nich zawyża
+   powierzchnię o grubość ściany z każdej strony, gdzie trafi się otwór.
+   Bierzemy więc zakres, w którym obszar jest ciągły (licznik pikseli w kolumnie
+   i w wierszu ≥ połowa maksimum), a wypustki zostają poza. */
+function solidBox(m,w,h){
+  const colc=new Int32Array(w), rowc=new Int32Array(h);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++) if(m[y*w+x]){ colc[x]++; rowc[y]++; }
+  const span=(arr,n)=>{ let mx=0; for(let i=0;i<n;i++) if(arr[i]>mx) mx=arr[i];
+    if(!mx) return null; const th=0.5*mx; let a=-1,b=-1;
+    for(let i=0;i<n;i++) if(arr[i]>=th){ if(a<0)a=i; b=i; }
+    return [a,b]; };
+  const sx=span(colc,w), sy=span(rowc,h);
+  if(!sx||!sy) return null;
+  let a=0; for(let y=sy[0];y<=sy[1];y++)for(let x=sx[0];x<=sx[1];x++) if(m[y*w+x]) a++;
+  return {x0:sx[0],x1:sx[1],y0:sy[0],y1:sy[1],a,rect:(sx[1]-sx[0]+1)*(sy[1]-sy[0]+1)};
+}
 function regionRects(G,ppm){
   const {m,w,h}=G;
-  const bb=maskBBox(m,w,h,null);
-  if(!bb) return null;
+  const bbFull=maskBBox(m,w,h,null);
+  if(!bbFull) return null;
+  const sb=solidBox(m,w,h)||bbFull;
+  // 1) obszar jest prostokątem — wcięcia od zabudowy i ościeży pomijamy
+  if(sb.a/sb.rect>=0.88 && grab(G,[sb])<=0.04) return [sb];
+  const bb=bbFull;
   const bw=bb.x1-bb.x0+1, bh=bb.y1-bb.y0+1;
-  if(grab(G,[bb])>0.05){                       // prostokąt opisany zagarniałby sąsiada
-    const li=largestRect(m,w,h);
-    return li? [li] : [bb];
-  }
-  // brakująca część prostokąta opisanego
+  const fill=bb.a/(bw*bh);
+  const grabbed=grab(G,[bb]);
+  if(fill>=0.92 && grabbed<=0.04) return [bb];
+  // 2) kształt L / T — wyraźny uskok przy narożniku
   const cm=new Uint8Array(w*h);
   for(let y=bb.y0;y<=bb.y1;y++)for(let x=bb.x0;x<=bb.x1;x++) if(!m[y*w+x]) cm[y*w+x]=1;
   const cut=largestRect(cm,w,h);
@@ -1872,10 +2086,14 @@ function regionRects(G,ppm){
   if(cut){
     const cw=cut.x1-cut.x0+1, ch=cut.y1-cut.y0+1;
     const corner=(cut.x0<=bb.x0+2||cut.x1>=bb.x1-2)&&(cut.y0<=bb.y0+2||cut.y1>=bb.y1-2);
-    if(cw>=MIN&&ch>=MIN&&cw*ch>=0.18*bw*bh&&corner)
+    if(cw>=MIN&&ch>=MIN&&cw*ch>=0.15*bw*bh&&corner&&grabbed<=0.06&&bb.a>=0.82*(bw*bh-cw*ch))
       return [{...bb,cut:{x0:cut.x0,x1:cut.x1,y0:cut.y0,y1:cut.y1}}];
   }
-  return [bb];                                 // zwykły prostokąt (wcięcia od zabudowy pomijamy)
+  // 3) obrys poszarpany (wypustki w ościeżach, przejścia) — bierzemy największy
+  //    prostokąt WPISANY, a do ścian dociągnie go później growRectToWalls.
+  //    Prostokąt opisany zawyżałby powierzchnię o każdą wypustkę.
+  const li=largestRect(m,w,h);
+  return li? [li] : [bb];
 }
 function cleanPoly(pts){
   const o=[];
@@ -1910,7 +2128,7 @@ function rectsToPoly(rs){
    i na pomieszczeniu już obrysowanym. */
 function growRectToWalls(bb,M,lab,claimed,env,isRoom,selfId){
   const {W,H,ink,ppm}=M;
-  const jump=Math.max(2,Math.round(0.10*ppm)), maxGrow=Math.round(1.6*ppm);
+  const jump=Math.max(2,Math.round(0.10*ppm)), maxGrow=Math.round(0.9*ppm);
   const freeStrip=(x0,x1,y0,y1)=>{
     let n=0,inkN=0;
     for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
@@ -1920,7 +2138,10 @@ function growRectToWalls(bb,M,lab,claimed,env,isRoom,selfId){
       if(L>0&&L!==selfId&&isRoom[L]) return false;          // inne pomieszczenie
       n++; if(ink[i]) inkN++;
     }
-    return n>0 && inkN/n<0.5;
+    /* pasek wolny to pasek prawie bez ściany — 12% dopuszczamy na ościeża
+       i słupki okienne. Przy luźniejszym progu obrys wchodził w ścianę
+       z oknami (otwór okienny to przecież brak ściany). */
+    return n>0 && inkN/n<0.25;
   };
   const sides=[
     {get:()=>[bb.x0-1,bb.x0-1,bb.y0,bb.y1], mv:d=>bb.x0-=d, lim:()=>bb.x0},
@@ -2018,17 +2239,6 @@ async function detectRooms(opt){
       alert('Nie wykryto pomieszczeń.\n\nSprawdź kolejno:\n1) „Podgląd maski” — czy ściany są ciągłe (granatowe) i czy czerwona ramka otacza budynek,\n2) czułość — przy jasnym skanie zwiększ, przy ciemnym tle zmniejsz,\n3) jeśli pomieszczenia zlewają się przez przejścia bez drzwi — ustaw „Domknij otwory” na 0,9 m,\n4) w ostateczności użyj narzędzia „Klik: pomieszczenie”.');
       return;
     }
-    // filtr „ograniczone ścianami”: odrzuca komórki tabeli rysunkowej, pola łańcuchów
-    // wymiarowych i wnętrza mebli — ich brzeg tworzą cienkie kreski, nie ściany
-    if(opt.wallBounded===true){
-      const {W,H,thickNear}=M, byId={}; cand.forEach(c=>{byId[c.id]={bnd:0,thk:0};});
-      for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
-        const i=y*W+x, L=lab[i]; if(L<=0) continue; const st=byId[L]; if(!st) continue;
-        if(lab[i-1]===-2||lab[i+1]===-2||lab[i-W]===-2||lab[i+W]===-2){ st.bnd++; if(thickNear[i]) st.thk++; }
-      }
-      const kept=cand.filter(c=>{ const st=byId[c.id]; return st&&st.bnd>0&&st.thk/st.bnd>=0.30; });
-      if(kept.length) cand=kept;
-    }
     // wektoryzacja — od największego regionu, żeby obrys dużego pomieszczenia mógł
     // wchłonąć drobne fragmenty (paski przy zabudowie, wycinki przy skrzydłach drzwi)
     let polys=[];
@@ -2103,25 +2313,32 @@ async function wandAt(world){
   const f=F();
   if(!f.bg){ toast('Brak podkładu.'); return; }
   if(!f.pxPerM){ toast('Najpierw skalibruj skalę rzutu.'); return; }
-  const opt={thresh:f.detT||190, gapM:f.detGap||0, rect:f.detRect!==false, minArea:0.4, minInr:0.3};
+  const opt={thresh:f.detT||190, gapM:0, doorW:f.detDoor??1.0, wallM:f.detWall||0.30,
+             rect:f.detRect!==false, minArea:0.4, minInr:0.3};
   try{
     const M=await buildMask(opt);
     const sx=Math.round(world.x*M.k), sy=Math.round(world.y*M.k);
     if(sx<0||sy<0||sx>=M.W||sy>=M.H){ toast('Klik poza rzutem.'); return; }
-    if(M.ink[sy*M.W+sx]){ toast('Kliknięto na kreskę rysunku — kliknij wnętrze pomieszczenia.'); return; }
-    // flood tylko z klikniętego punktu (bez ograniczenia obwiednią)
-    const {W,H,ink}=M, N=W*H;
-    const lab=new Int32Array(N);
-    for(let i=0;i<N;i++) lab[i]= ink[i]?-2:0;
-    const id=1, st=[sy*W+sx]; lab[st[0]]=id;
-    let cnt=0,minx=W,maxx=0,miny=H,maxy=0, touched=false;
-    while(st.length){ const i=st.pop(); cnt++; const x=i%W,y=(i/W)|0;
-      if(x===0||y===0||x===W-1||y===H-1) touched=true;
-      if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y;
-      if(x>0&&lab[i-1]===0){lab[i-1]=id;st.push(i-1);} if(x<W-1&&lab[i+1]===0){lab[i+1]=id;st.push(i+1);}
-      if(y>0&&lab[i-W]===0){lab[i-W]=id;st.push(i-W);} if(y<H-1&&lab[i+W]===0){lab[i+W]=id;st.push(i+W);} }
-    if(touched){ toast('Obszar nie jest zamknięty — wypływa poza rysunek. Sprawdź „Podgląd maski”, zwiększ czułość albo domknij otwory.'); return; }
-    const pts=regionToPoly(lab,M,{id,cnt,minx,maxx,miny,maxy},opt);
+    /* ta sama mapa pomieszczeń co w rozpoznawaniu całego rzutu — klik tylko
+       wskazuje, które z nich obrysować */
+    const {lab,comps}=labelRegions(M);
+    let L=lab[sy*M.W+sx];
+    if(L<=0){
+      /* trafienie w kreskę albo w drobny symbol — szukamy pomieszczenia
+         w promieniu pół metra, żeby klik nie wymagał celowania */
+      const R=Math.max(3,Math.round(0.5*M.ppm));
+      let best=0, bd=1e9;
+      for(let dy=-R;dy<=R;dy++)for(let dx=-R;dx<=R;dx++){
+        const x=sx+dx, y=sy+dy; if(x<0||y<0||x>=M.W||y>=M.H) continue;
+        const v=lab[y*M.W+x]; if(v<=0) continue;
+        const d=dx*dx+dy*dy; if(d<bd){ bd=d; best=v; } }
+      L=best;
+    }
+    if(L===-1){ toast('To obszar poza bryłą budynku.'); return; }
+    if(L<=0){ toast('W tym miejscu nie ma zamkniętego obszaru — sprawdź „Podgląd maski”.'); return; }
+    const c=comps.find(q=>q.id===L);
+    if(!c){ toast('Nie udało się obrysować obszaru.'); return; }
+    const pts=regionToPoly(lab,M,c,opt);
     if(!pts){ toast('Nie udało się obrysować obszaru.'); return; }
     const cen=polyCentroid(pts);
     const ex=f.rooms.find(r=>pointInPoly(cen,r.pts));

@@ -7,7 +7,7 @@ Aplikacja webowa 21 zmysłów do projektowania wentylacji mechanicznej z odzyski
 ## Co robi
 
 1. Podkład: wgranie rzutu (PDF / PNG / JPG), zmiana rozmiaru podkładu („Popraw"), kalibracja skali.
-2. Pomieszczenia: prostokąt z dwóch narożników albo nieregularny obrys punkt po punkcie, rozpoznawanie automatyczne z rysunku (maska ścian + OCR), edycja obrysu po zaznaczeniu (uchwyty wierzchołków, wymiary liczbowe, przeciągnięcie wnętrza przesuwa całe pomieszczenie bez zmiany kształtu), mieszkańcy na rzucie.
+2. Pomieszczenia: prostokąt z dwóch narożników albo nieregularny obrys punkt po punkcie, rozpoznawanie automatyczne z rysunku (detekcja pasm ścian + OCR), edycja obrysu po zaznaczeniu (uchwyty wierzchołków, wymiary liczbowe, przeciągnięcie wnętrza przesuwa całe pomieszczenie bez zmiany kształtu), mieszkańcy na rzucie.
 3. Urządzenia i sieć: centrala, rozdzielacze, anemostaty, czerpnia, wyrzutnia, piony, kanały spiro i przewody FLX. Urządzenia wstawia się **przeciągnięciem karty** z szyny narzędzi na rzut albo kliknięciem karty i kliknięciem na rzucie.
 4. Obliczenia: bilans powietrza (PN-83/B-03430, WT §147–155), strefy dzień/noc, wymiarowanie przewodów, spręż, dobór centrali HRU, zestawienie materiałów, lista kontrolna zgodności.
 5. Widok 3D (aksonometria), symulator sterowania (Modbus / GATE) z pogodą z Open-Meteo jako warunkami zewnętrznymi, raport do wydruku z arkuszami rysunkowymi.
@@ -70,6 +70,9 @@ Moduł `js/weather.js` pobiera bieżące warunki z Open-Meteo (bez klucza i reje
 - **Jedna ścieżka wstawiania elementu.** `placeNodeAt(type, punkt)` w silniku obsługuje i kliknięcie narzędziem, i upuszczenie karty. Reguły (numer pionu, przypisanie do pomieszczenia, ostrzeżenia) nie mogą się rozjechać między trybami.
 - **Cofnij / przywróć na jednym stosie.** `snapshot()` czyści stos „przywróć", `undo()` i `redo()` przerzucają stany między stosami. Każda zmiana na planie przechodzi przez `snapshot()`, więc historia obejmuje też przeciągnięte karty i automatykę.
 - **Obrót 3D wokół środka bryły.** `v3Orbit()` zmienia kąty i koryguje przesunięcie tak, by środek modelu został w tym samym punkcie ekranu — bryła nie ucieka poza kadr przy obracaniu.
+- **Rozpoznawanie pomieszczeń szuka ścian, nie kresek.** Poprzednia wersja traktowała jako przegrodę każdą kreskę rysunku — łańcuchy wymiarowe, osie kreskowo-punktowe, opisy i meble siekały pomieszczenia na kawałki. Teraz ściana musi być **pasmem**: albo wypełnionym (czarnym, szarym, kreskowanym), albo — awaryjnie, na rysunkach czysto liniowych — dwiema równoległymi liniami odległymi o grubość ściany. Kolejność kroków: dwa progi tuszu (kreski i „wszystko, co nie jest bielą”, bo wypełnienie bywa jasnoszare) → usunięcie wolnostojących plamek mniejszych niż 0,45 m (opisy, cyfry, kreski osi) → test wypełnienia i gęstości kreskowania → odrzucenie fragmentów krótszych niż 0,8 m → kierunkowe domknięcie otworów → etykietowanie → rozrost obrysów do rzeczywistych ścian.
+- **Otwory domykane są kierunkowo, nie morfologicznie.** Żeby zmostkować 0,9 m między ścianami grubości 0,26 m, promień domknięcia musiałby być większy od samego otworu — a wtedy znikają wąskie pomieszczenia. Zamiast tego luka jest zasklepiana tylko wtedy, gdy po obu jej stronach stoi ta sama ściana przecięta w poprzek (grubość mierzona prostopadle mieści się w grubości ściany). Drzwi się domykają, korytarz o tej samej szerokości — nie.
+- **Prostokąt pomieszczenia liczony z zakresu ciągłego.** Obrys ma „języki” wchodzące w ościeża i wnęki okienne; prostokąt opisany na nich zawyżałby powierzchnię o grubość ściany z każdej strony z otworem. Bierzemy zakres, w którym obszar jest ciągły (licznik pikseli w kolumnie i wierszu ≥ połowa maksimum), a dopiero gdy obrys nie jest prostokątem — kształt L albo największy prostokąt wpisany.
 - **Zmiana rozmiaru podkładu wypala się w obrazie.** Suwak daje podgląd (`bgPrevK` tylko przy rysowaniu), a „Zastosuj" przerysowuje podkład do nowego rozmiaru i zapisuje jako obraz. Dzięki temu rozpoznawanie pomieszczeń, maska ścian i widok 3D pracują na realnych pikselach i nie wymagają własnej transformacji. Skala rysunku (px/m) nie zmienia się — obrysy i instalacja zostają na miejscu, żeby dało się dopasować podkład do nich.
 - **Nakładki na rysunku nie przechwytują kliknięć.** Kontenery mają `pointer-events:none`, tylko same kontrolki je łapią; `fitView()` zostawia marginesy pod nakładki, żeby rysunek nie chował się pod przyciskami.
 - **Pełny ekran panelu to dokument, nie okno.** W `#side.fs` panel przechodzi w `display:block` z własnym przewijaniem, a cała treść dostaje jedną wyśrodkowaną miarę (`--fs-measure: 1280px`): nagłówek i zakładki są przyklejone u góry, tabele mają pełną szerokość kolumny, a lista układa się w dwie kolumny (`column-width: 560px`). Wysokość `auto` jest tu warunkiem poprawności — przy sztywnej wysokości układ wielokolumnowy uciekał w bok i część zestawienia przestawała być dostępna.
@@ -93,6 +96,17 @@ Jednorazowo trzeba włączyć Pages w repozytorium: **Settings → Pages → Bui
 python3 -m http.server 8080
 # → http://localhost:8080
 ```
+
+Sprawdzenie rozpoznawania pomieszczeń (wymaga playwright z chromium):
+
+```
+python3 -m http.server 8765 &
+PLAYWRIGHT_PATH=/ścieżka/do/playwright node tests/detect.test.js
+```
+
+Test generuje trzy rzuty o typowych patologiach realnych rysunków plus wariant „skan"
+(szare tło, szum, JPEG) i porównuje rozpoznane powierzchnie z geometrią wzorcową.
+Stan odniesienia: **5/6, 5/5, 6/6 pomieszczeń, odchyłki powierzchni 1–7%**.
 
 ## Uruchomienie
 
