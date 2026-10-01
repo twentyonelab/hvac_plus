@@ -326,7 +326,7 @@
     const p = pointAt(S.min, sum.ctx);
     updatePresence(p.occ.n);
     S.living = livingAt(S.min, sum.ctx);          // kto gdzie stoi w tej chwili
-    const f1 = (x,u,d=0)=> `${x.toLocaleString('pl-PL',{minimumFractionDigits:d,maximumFractionDigits:d})} ${u}`;
+    const f1 = (x,u,d=0)=> `${x.toLocaleString(window.HVAC_LOCALE||'pl-PL',{minimumFractionDigits:d,maximumFractionDigits:d})} ${u}`;
     $('#simClock').textContent = hhmm(S.min);
     $('#simPhase').textContent = p.sun>0.02 ? (p.sun>0.5?'dzień':'świt / zmierzch') : 'noc';
     $('#simTsup').textContent = f1(p.tSup,'°C',1);

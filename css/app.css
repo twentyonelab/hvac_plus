@@ -80,6 +80,13 @@ svg.i{width:16px;height:16px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-
 
 /* ---------- pasek górny ---------- */
 #topbar{display:flex;align-items:center;gap:var(--space-8);padding:14px 20px 6px 20px;flex:0 0 auto}
+/* przełącznik języka (flagi) — lewy górny róg */
+.lang{display:flex;gap:4px;align-items:center;flex:0 0 auto;padding:3px;border:1px solid var(--border-soft);border-radius:999px;margin-right:2px}
+.lang button{display:grid;place-items:center;width:30px;height:22px;padding:0;border:0;border-radius:999px;background:transparent;cursor:pointer;opacity:.45;filter:saturate(.35);transition:opacity .15s,filter .15s,background .15s}
+.lang button svg{width:20px;height:12px;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.14);display:block}
+.lang button:hover{opacity:.85;filter:none}
+.lang button.active{opacity:1;filter:none;background:var(--gray-100,#f1f1f1)}
+.lang button:focus-visible{outline:2px solid var(--accent-primary-strong,#333);outline-offset:1px}
 .brand{display:flex;flex-direction:row;align-items:center;gap:16px;flex:0 0 auto;padding:0 18px 0 2px;border-right:1px solid var(--border-soft);margin-right:var(--space-4)}
 .brand-logo{height:34px;width:auto;color:var(--brand);display:block}
 .brand-sub{display:inline-block;font:500 13px/1 var(--font-core);letter-spacing:.05em;text-transform:uppercase;color:var(--text-secondary);white-space:nowrap;padding-left:14px;border-left:1px solid var(--border-soft)}

@@ -4,6 +4,8 @@ Aplikacja webowa 21 zmysłów do projektowania wentylacji mechanicznej z odzyski
 
 **Wersja online (GitHub Pages):** https://twentyonelab.github.io/hvac_plus/
 
+**English version (link do wysłania):** https://twentyonelab.github.io/hvac_plus/?lang=en
+
 ## Co robi
 
 1. Podkład: wgranie rzutu (PDF / PNG / JPG), zmiana rozmiaru podkładu („Popraw"), obrót całej kondygnacji o 90° w lewo lub w prawo, kalibracja skali.
@@ -14,6 +16,7 @@ Aplikacja webowa 21 zmysłów do projektowania wentylacji mechanicznej z odzyski
 6. Symulacja doby: przewijanie po wykresie (kursor zawsze stoi na danych), tempo od ×60 do ×2400, ikona dnia/nocy, pogoda zmieniająca się z godziną (prawdziwy odczyt z Open-Meteo nadaje poziom, przebieg doby jest modelowany i podpisany jako symulacja), profil obłożenia, CO₂ w pomieszczeniach jako dryfujący obłok, moc grzania powietrza, temperatura nawiewu i oszczędność z odzysku. Rysunek jest szary i ciemnieje na noc, a jedynym kolorem zostaje mgła CO₂. Mieszkańcy (biali, z miękkim cieniem) chodzą po domu według scenariusza doby — noc we własnych pokojach, rano kuchnia i łazienki, w dzień dom prawie pusty, wieczorem część dzienna — a między 17:30 a 21:30 wpadają goście.
 7. Przyciąganie (snap) przy rysowaniu, edycji i przesuwaniu pomieszczeń: narożniki i linie już wstawionych obrysów, ze znacznikiem pod kursorem.
 8. Styl wyświetlania („oczko”): wyróżnienie jednej warstwy — tylko kanały, tylko urządzenia, tylko pomieszczenia, tylko CO₂ — reszta rysunku szara i przy 20% krycia. Działa identycznie w 2D i 3D. „Tylko CO₂” bez danych CO₂ zostawia cały rysunek szary; dane dają symulacja doby albo podłączone sterowanie.
+9. Dwa języki: polski i angielski. Przełącznik z flagami w lewym górnym rogu; wybór zapisuje się w przeglądarce i w adresie (`?lang=en` / `?lang=pl`), więc link można wysłać. Tłumaczony jest cały interfejs, podpowiedzi, komunikaty, opisy na rysunku, symulacja i raport, a projekt demo ma angielskie nazwy pomieszczeń i kondygnacji. Liczby i daty w formacie angielskim.
 
 ## Struktura
 
@@ -29,6 +32,8 @@ js/ui.js              nakładka UI: zwijane grupy narzędzi, pigułki kondygnacj
 js/dnd.js             przeciąganie kart urządzeń na rzut (Pointer Events, podgląd na canvasie)
 js/weather.js         dane pogodowe z Open-Meteo (kontrakt WeatherReading, cache, backoff)
 js/sim.js             symulacja doby: pogoda, pora dnia, obłożenie, energia i odzysk
+js/i18n.js            warstwa językowa PL ⇄ EN (podmiana tekstów w locie, przełącznik flag)
+js/i18n-en.js         słownik PL → EN (~950 haseł: interfejs, normy, raport, komunikaty)
 assets/fonts          Outfit (variable, latin + latin-ext)
 assets/icons          ikony Lucide z systemu 21 Apps
 assets/logo-21zmyslow.svg, assets/sygnet-21zmyslow.svg   logo firmowe
@@ -86,6 +91,7 @@ Moduł `js/weather.js` pobiera bieżące warunki z Open-Meteo (bez klucza i reje
 - **Opisy na rzucie nie nachodzą na siebie.** Każda klatka rysunku ma rejestr zajętych prostokątów (`lblRects`): najpierw miejsce rezerwują symbole urządzeń, potem opisy pomieszczeń, na końcu opisy przewodów i anemostatów — te odsuwają się o wysokość wiersza albo znikają, gdy nie ma miejsca. Opis pomieszczenia dodatkowo dopasowuje się do jego szerokości: jedna linia → kilka linii → sama nazwa → sam numer, z łagodnym pomniejszeniem. Opis pomieszczenia nigdy nie znika.
 - **Kafelek pogody jest zawsze na rysunku.** Bez odczytu zaprasza do podania lokalizacji (klik otwiera zakładkę „Sterowanie"), z odczytem pokazuje temperaturę i warunki; przy otwartej symulacji przesuwa się nad panel osi czasu.
 - **Kolory rysunku to warstwa semantyczna, nie dekoracja.** Zmiana palety = zmiana wartości w jednym miejscu (zmienne CSS + stałe silnika), a nie przy każdym `fillStyle`.
+- **Dwa języki bez duplikowania kodu.** Silnik nadal pisze po polsku, a `i18n.js` podmienia teksty w locie: węzły tekstowe i atrybuty DOM (MutationObserver), napisy na canvasie (`fillText` / `strokeText` / `measureText`, więc opisy mieszczą się w ramkach), okna `alert` / `confirm` i eksport CSV. Klucze słownika mają liczby zastąpione przez `{n}`, więc jedno hasło obsługuje każdą wartość („Rozpoznano {n} pomieszczeń”), a zdania składane z kawałków tłumaczy się fragmentami. Formaty liczb i dat idą za językiem (`HVAC_LOCALE`). Powrót do polskiego przywraca zapamiętane oryginały, bez przeładowania strony i bez utraty projektu. Koszt: nowy tekst w silniku trzeba dopisać do `i18n-en.js` — test pokrycia (przejście całej aplikacji w trybie EN i wyszukanie polskich słów) wyłapuje braki. Format pliku projektu bez zmian; nazwy wpisane przez użytkownika nie są tłumaczone.
 - **UI podmienia globalne funkcje renderujące** (`renderFloorbar`, `refreshAll`, `setTool`) zamiast edytować silnik. Aktualizacja silnika = podmiana plików `engine-*.js`.
 
 ## Publikacja (GitHub Pages)
@@ -110,6 +116,14 @@ PLAYWRIGHT_PATH=/ścieżka/do/playwright node tests/detect.test.js
 Test generuje trzy rzuty o typowych patologiach realnych rysunków plus wariant „skan"
 (szare tło, szum, JPEG) i porównuje rozpoznane powierzchnie z geometrią wzorcową.
 Stan odniesienia: **5/6, 5/5, 6/6 pomieszczeń, odchyłki powierzchni 1–7%**.
+
+Pokrycie tłumaczenia angielskiego (przejście całej aplikacji w trybie `?lang=en`, wypisuje teksty z polskimi słowami):
+
+```
+PLAYWRIGHT_PATH=/ścieżka/do/playwright node tests/i18n.test.js
+```
+
+Stan odniesienia: **~1580 tekstów, 0 nieprzetłumaczonych**.
 
 ## Uruchomienie
 
